@@ -12,6 +12,7 @@ dependencies = [
     "langchain-text-splitters>=0.3.6",
     "langchain[groq]>=0.3.18",
     "langgraph>=0.2.72",
+    "pandas>=2.2.3",
 ]
 
 [dependency-groups]
