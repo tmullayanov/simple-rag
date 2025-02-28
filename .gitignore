@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# ipython tmp and checkpoints
+.ipynb_checkpoints
+
