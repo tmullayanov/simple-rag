@@ -8,7 +8,6 @@ from simple_rag.qna.qna_db import AbstractQnA, SimpleQna
 
 
 class SimpleVectorStore:
-
     vector_store: InMemoryVectorStore
     doc_ids: list[str]
     qna: AbstractQnA
@@ -18,28 +17,26 @@ class SimpleVectorStore:
 
     @classmethod
     def make_vector_store(cls):
-        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-mpnet-base-v2"
+        )
         return InMemoryVectorStore(embeddings)
-    
+
     def store_qna(self, qna: AbstractQnA):
         self.qna = qna
         docs = self.__build_docs__()
         self.doc_ids = self.vector_store.add_documents(docs)
 
-
     def __build_docs__(self):
         docs = [
-            Document(
-                page_content=s,
-                metadata={'source': 'local_qna'}
-            )
+            Document(page_content=s, metadata={"source": "local_qna"})
             for s in self.qna.get_questions()
         ]
 
         return docs
-    
+
     def similarity_search(self, question: str):
         return self.vector_store.similarity_search(question)
-    
+
     def lookup_answers(self, question: str):
         return self.qna.lookup_answer(question)

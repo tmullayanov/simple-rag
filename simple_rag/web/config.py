@@ -6,8 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class GroqSettings(BaseSettings):
-    model_name: str = Field(validation_alias='GROQ_MODEL_NAME')
+    model_name: str = Field(validation_alias="GROQ_MODEL_NAME")
 
 
 class HttpSettings(BaseSettings):
@@ -15,13 +16,14 @@ class HttpSettings(BaseSettings):
     port: int = Field(validation_alias="PORT", cast=int, default=8000)
 
 
-class AppSettings(HttpSettings, GroqSettings):
-    pass 
+class QnaFileSettings(BaseSettings):
+    path: str = Field(validation_alias="QNA_FILE_PATH", default="")
+
+
+class AppSettings(HttpSettings, GroqSettings, QnaFileSettings):
+    pass
 
 
 APP_SETTINGS = AppSettings()
 
-__all__ = [
-    'AppSettings',
-    'APP_SETTINGS'
-]
+__all__ = ["AppSettings", "APP_SETTINGS"]

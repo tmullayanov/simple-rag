@@ -2,14 +2,14 @@ from simple_rag.qna.qna_db import SimpleQna
 
 import unittest
 
-class TestSimpleQnaDB(unittest.TestCase):
 
+class TestSimpleQnaDB(unittest.TestCase):
     def setUp(self):
         # Подготовка тестовых данных
         self.test_db = {
             "What is Python?": ["A programming language", "A snake"],
             "What is 2 + 2?": ["4"],
-            "What is the capital of France?": ["Paris"]
+            "What is the capital of France?": ["Paris"],
         }
         self.qna_db = SimpleQna(self.test_db)
 
@@ -23,7 +23,9 @@ class TestSimpleQnaDB(unittest.TestCase):
         # Проверка метода get_questions_with_answers
         questions_with_answers = list(self.qna_db.get_questions_with_answers())
         expected_questions_with_answers = list(self.test_db.items())
-        self.assertEqual(sorted(questions_with_answers), sorted(expected_questions_with_answers))
+        self.assertEqual(
+            sorted(questions_with_answers), sorted(expected_questions_with_answers)
+        )
 
     def test_lookup_answer_existing_question(self):
         # Проверка метода lookup_answer для существующего вопроса
@@ -44,5 +46,6 @@ class TestSimpleQnaDB(unittest.TestCase):
         answers = self.qna_db.lookup_answer(question)
         self.assertIsNone(answers)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

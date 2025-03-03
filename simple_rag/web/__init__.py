@@ -7,12 +7,8 @@ from .config import APP_SETTINGS
 
 app = FastAPI(lifespan=startup_and_shutdown)
 
-app.include_router(example_router, tags=['test'])
+app.include_router(example_router, tags=["test"])
 
 
 def run():
-    uvicorn.run(
-        app,
-        host=APP_SETTINGS.host,
-        port=APP_SETTINGS.port
-    )
+    uvicorn.run(app, host=APP_SETTINGS.host, port=APP_SETTINGS.port)
