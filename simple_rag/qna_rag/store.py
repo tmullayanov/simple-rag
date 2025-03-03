@@ -4,7 +4,7 @@ from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.docstore.document import Document
 
-from simple_rag.qna.qna_db import AbstractQnA, SimpleQna
+from simple_rag.qna.pseudo_db import AbstractQnA, SimpleQna
 
 
 class SimpleVectorStore:

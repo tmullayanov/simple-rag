@@ -1,4 +1,4 @@
-from simple_rag.qna.qna_db import SimpleQna
+from simple_rag.qna.pseudo_db import SimpleQna
 
 import unittest
 

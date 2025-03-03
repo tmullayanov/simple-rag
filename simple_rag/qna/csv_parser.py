@@ -1,13 +1,6 @@
 import pandas as pd
 
 
-def build_qna_relation(csv_path: str, delimiter: str = ";") -> dict[str, list[str]]:
-    parser = QnAFileParser(qna_path=csv_path, delimiter=delimiter)
-    qna_dict = parser.build_qna_relation()
-
-    return qna_dict
-
-
 class QnAFileParser:
     def __init__(self, qna_path: str, delimiter: str = ";"):
         self.qna_path = qna_path
@@ -21,7 +14,7 @@ class QnAFileParser:
         """Загружает данные из CSV файла."""
         self.qna_df = pd.read_csv(self.qna_path, delimiter=self.delimiter)
 
-    def build_qna_relation(self) -> dict[str, list[str]]:
+    def build_qna_dict(self) -> dict[str, list[str]]:
         """Создает словарь соответствий вопрос-ответы из DataFrame."""
         if self.qna_df is None:
             self.load_data()

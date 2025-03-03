@@ -1,6 +1,8 @@
 from typing import Optional, Iterator
 import abc
 
+from simple_rag.qna.csv_parser import QnAFileParser
+
 
 class AbstractQnA(abc.ABC):
     @abc.abstractmethod
@@ -34,9 +36,12 @@ class SimpleQna(AbstractQnA):
     """
 
     db: dict[str, list[str]]
+    parser: QnAFileParser
 
-    def __init__(self, db: dict[str, list[str]]):
-        self.db = db
+    def __init__(self, parser: QnAFileParser):
+        parser.load_data()
+        self.parser = parser
+        self.db = parser.build_qna_dict()
 
     def get_questions(self) -> Iterator[str]:
         return self.db.keys()

@@ -1,5 +1,5 @@
-from simple_rag.rag.state import RagState
-from simple_rag.rag.store import SimpleVectorStore
+from simple_rag.qna_rag.state import RagState
+from simple_rag.qna_rag.store import SimpleVectorStore
 from langgraph.graph import START, StateGraph
 from .prompts import rag_prompt
 

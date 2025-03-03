@@ -17,7 +17,8 @@ class HttpSettings(BaseSettings):
 
 
 class QnaFileSettings(BaseSettings):
-    path: str = Field(validation_alias="QNA_FILE_PATH", default="")
+    qna_path: str = Field(validation_alias="QNA_FILE_PATH")
+    qna_delimiter: str = Field(validation_alias="QNA_DELIMITER", default=";")
 
 
 class AppSettings(HttpSettings, GroqSettings, QnaFileSettings):
