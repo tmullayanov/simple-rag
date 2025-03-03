@@ -6,14 +6,18 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "bs4>=0.0.2",
+    "fastapi>=0.115.11",
     "langchain-community>=0.3.17",
     "langchain-core>=0.3.35",
     "langchain-huggingface>=0.1.2",
     "langchain-text-splitters>=0.3.6",
     "langchain[groq]>=0.3.18",
     "langgraph>=0.2.72",
+    "loguru>=0.7.3",
     "pandas>=2.2.3",
+    "pydantic>=2.10.6",
     "pytest>=8.3.4",
+    "uvicorn>=0.34.0",
 ]
 
 [dependency-groups]
@@ -23,5 +27,5 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = [
-    ".", "src"
+    "."
 ]

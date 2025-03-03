@@ -1,13 +1,13 @@
 import pandas as pd
 
 def build_qna_relation(csv_path: str, delimiter: str = ';') -> dict[str, list[str]]:
-    parser = QnAParser(qna_path=csv_path, delimiter=delimiter)
+    parser = QnAFileParser(qna_path=csv_path, delimiter=delimiter)
     qna_dict = parser.build_qna_relation()
 
     return qna_dict
 
 
-class QnAParser:
+class QnAFileParser:
     def __init__(self, qna_path: str, delimiter: str = ';'):
         self.qna_path = qna_path
         self.delimiter = delimiter
