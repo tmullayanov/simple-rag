@@ -12,3 +12,5 @@ wheels/
 # ipython tmp and checkpoints
 .ipynb_checkpoints
 
+
+.env
