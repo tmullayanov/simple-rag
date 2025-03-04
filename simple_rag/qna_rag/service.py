@@ -4,7 +4,6 @@ from langchain.chat_models.base import BaseChatModel
 
 from simple_rag.llm.groq import llm
 from simple_rag.qna.csv_parser import QnAFileParser
-from simple_rag.qna.pseudo_db import SimpleQna
 from simple_rag.qna_rag.engine import build_rag_graph
 from typing_extensions import TypedDict
 
@@ -16,7 +15,7 @@ class QnAServiceConfig(TypedDict):
     qna_delimiter: str = ";"
 
 
-class QnaService:
+class QnaStaticFileService:
     
     store: SimpleVectorStore
     llm: BaseChatModel
@@ -25,7 +24,7 @@ class QnaService:
     def __init__(self, config: QnAServiceConfig):
         
         parser = QnAFileParser(config["qna_path"], config["qna_delimiter"])
-        qna = SimpleQna(parser=parser)
+        qna = parser.build_qna()
 
         self.store = SimpleVectorStore()
         self.store.store_qna(qna)

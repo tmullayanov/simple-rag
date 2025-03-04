@@ -1,5 +1,7 @@
 import pandas as pd
 
+from simple_rag.qna.pseudo_db import AbstractQnA, SimpleQna
+
 
 class QnAFileParser:
     def __init__(self, qna_path: str, delimiter: str = ";"):
@@ -14,7 +16,7 @@ class QnAFileParser:
         """Загружает данные из CSV файла."""
         self.qna_df = pd.read_csv(self.qna_path, delimiter=self.delimiter)
 
-    def build_qna_dict(self) -> dict[str, list[str]]:
+    def build_qna(self) -> AbstractQnA:
         """Создает словарь соответствий вопрос-ответы из DataFrame."""
         if self.qna_df is None:
             self.load_data()
@@ -25,4 +27,4 @@ class QnAFileParser:
             answer = row[self.tag_answer]
             self.qna_db.setdefault(question, []).append(answer)
 
-        return self.qna_db
+        return SimpleQna(self.qna_db)
