@@ -14,4 +14,5 @@ def get_qna_service(cfg: QnAServiceConfig):
 async def create_qna_rag(service: QnaStaticFileService = Depends(lambda: get_qna_service(APP_SETTINGS.model_dump()))):
     
     print(service.store.doc_ids)
-    return JSONResponse(content={"message": "Hello from the router!"})
+    answer = service.ask(question="Чем машинное обучение отличается от глубокого?")
+    return JSONResponse(content={"message": answer})
