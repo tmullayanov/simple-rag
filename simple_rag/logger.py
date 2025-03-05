@@ -34,3 +34,6 @@ def setup_logger(cfg: LogConfig) -> Logger:
 
     logger.debug(f'Set up logger with configuration: {cfg}')
     return logger
+
+def get_logger():
+    return logging.getLogger(GLOBAL_LOGGER_NAME)
