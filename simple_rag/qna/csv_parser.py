@@ -4,11 +4,11 @@ from simple_rag.qna.pseudo_db import AbstractQnA, SimpleQna
 
 
 class QnAFileParser:
-    def __init__(self, qna_path: str, delimiter: str = ";"):
+    def __init__(self, qna_path: str, delimiter: str = ";", tag_question: str = 'Вопрос', tag_answer: str = 'Ответ'):
         self.qna_path = qna_path
         self.delimiter = delimiter
-        self.tag_question = "Вопрос"
-        self.tag_answer = "Ответ"
+        self.tag_question = tag_question
+        self.tag_answer = tag_answer
         self.qna_df = None
         self.qna_db = None
 
