@@ -17,13 +17,13 @@ async def startup_and_shutdown(app: FastAPI):
     Здесь инициализируем подключения до начала работы приложения
     и закрываем ресурсы после окончания работы приложения.
     """
-    print("Starting up the application...")
-    # Faking initialization (e.g., connecting to the database)
-    await asyncio.sleep(1)
+    from .context import APP_CTX
+
+    # Making initialization (e.g., connecting to the database)
+    await APP_CTX.on_startup()
 
     # Pass control to the main code
     yield
 
-    # Faking shutdown (e.g., closing connections)
-    await asyncio.sleep(1)
-    print("Shutting down the application...")
+    # Making shutdown (e.g., closing connections)
+    await APP_CTX.on_shutdown()
