@@ -2,13 +2,13 @@ from fastapi import Depends
 from langgraph.graph.state import CompiledStateGraph
 from langchain.chat_models.base import BaseChatModel
 
+from simple_rag.chats.chat import ChatModel
 from simple_rag.llm.groq import llm
 from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.qna.csv_parser import QnAFileParser
 from simple_rag.qna_rag.engine import build_rag_graph
 from typing_extensions import TypedDict
 
-from simple_rag.qna_rag.state import RagState
 from simple_rag.qna_rag.store import SimpleVectorStore
 
 import logging
@@ -20,7 +20,7 @@ class QnAServiceConfig(TypedDict):
     qna_delimiter: str = ";"
 
 
-class QnaStaticFileService:
+class QnaStaticFileService(ChatModel):
     
     store: SimpleVectorStore
     llm: BaseChatModel
@@ -44,7 +44,7 @@ class QnaStaticFileService:
 
         logger.debug('QnaStaticFileService:: init() DONE')
 
-    def ask(self, question: str) -> RagState:
+    def send(self, question: str) -> str:
         return self.graph.invoke({"raw_input": question})
 
     

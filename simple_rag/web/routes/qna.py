@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 
 import logging
 
+from simple_rag.chats.chat import Chat
 from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.qna_rag.service import QnAServiceConfig, QnaStaticFileService
 from simple_rag.web.config import APP_SETTINGS
@@ -18,5 +19,7 @@ def get_qna_service(cfg: QnAServiceConfig):
 async def create_qna_rag(service: QnaStaticFileService = Depends(lambda: get_qna_service(APP_SETTINGS.model_dump()))):
     
     logger.info(service.store.doc_ids)
-    answer = service.ask(question="Чем машинное обучение отличается от глубокого?")
-    return JSONResponse(content={"message": answer['answer']})
+    chat = Chat(model=service)
+    answer = chat.send("Чем машинное обучение отличается от глубокого?")
+    
+    return JSONResponse(content={"message": answer})
