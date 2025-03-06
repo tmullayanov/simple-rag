@@ -1,3 +1,4 @@
+import uuid
 from fastapi import Depends
 from langgraph.graph.state import CompiledStateGraph
 from langchain.chat_models.base import BaseChatModel
@@ -17,7 +18,7 @@ logger = logging.getLogger(GLOBAL_LOGGER_NAME)
 
 class QnAServiceConfig(TypedDict):
     qna_path: str
-    qna_delimiter: str = ";"
+    qna_delimiter: str
 
 
 class QnaStaticFileService(ChatModel):
@@ -44,7 +45,9 @@ class QnaStaticFileService(ChatModel):
 
         logger.debug('QnaStaticFileService:: init() DONE')
 
-    def send(self, question: str) -> str:
-        return self.graph.invoke({"raw_input": question})
+    def send(self, id: uuid.UUID, question: str) -> str:
+        answer = self.graph.invoke({"raw_input": question})
+
+        return answer['answer']
 
     

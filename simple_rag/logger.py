@@ -4,7 +4,6 @@ from typing import Optional, TypedDict
 
 
 GLOBAL_LOGGER_NAME = 'simple_rag_logger'
-GLOBAL_LOGGER_NAME = "my_logger"
 
 class LogConfig(TypedDict):
     log_level: str

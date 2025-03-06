@@ -72,7 +72,7 @@ def test_chat_keep_track_of_messages():
 
 class EmptyModel(ChatModel):
     
-    def send(self, message: str):
+    def send(self, id, message: str):
         pass
 
 class MockModel(ChatModel):
@@ -82,10 +82,10 @@ class MockModel(ChatModel):
     def __init__(self):
         self.messages = []
 
-    def send(self, message: str):
+    def send(self, id, message: str):
         self.messages.append(message)
 
 class ParrotModel(ChatModel):
 
-    def send(self, message):
+    def send(self, id, message):
         return message

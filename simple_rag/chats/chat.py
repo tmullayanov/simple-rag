@@ -6,7 +6,7 @@ import uuid
 class ChatModel(abc.ABC):
     
     @abc.abstractmethod
-    def send(self, message: str) -> str:
+    def send(self, id: uuid.UUID, message: str) -> str:
         raise NotImplementedError("Must be implemented")
 
 class HistoryMessage(TypedDict):
@@ -27,13 +27,15 @@ class Chat:
         self.model = model
         self.history = []
 
-    def send(self, message: str):
+    def send(self, message: str) -> str:
         self.history.append({
             'role': 'user',
             'msg': message
         })
-        response = self.model.send(message)
+        response = self.model.send(self.id, message)
         self.history.append({
             'role': 'model',
             'msg': response
         })
+
+        return response
