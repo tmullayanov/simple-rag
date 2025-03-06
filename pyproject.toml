@@ -1,7 +1,7 @@
 [project]
 name = "dyi-rag"
 version = "0.1.0"
-description = "Add your description here"
+description = "Case-study of RAG technique and example application"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
