@@ -6,6 +6,9 @@ from simple_rag.chats.chat import Chat, ChatModel
 
 @pytest.fixture
 def dummy_chat():
+    '''
+    Boilerplate for setting up chat.
+    '''
     model = EmptyModel()
     chat = Chat(model)
 
