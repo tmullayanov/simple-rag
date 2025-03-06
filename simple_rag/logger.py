@@ -4,33 +4,35 @@ from typing import Optional, TypedDict
 
 
 GLOBAL_LOGGER_NAME = 'simple_rag_logger'
+GLOBAL_LOGGER_NAME = "my_logger"
 
 class LogConfig(TypedDict):
     log_level: str
     log_file: Optional[str]
-    file_log_level: str
-
+    file_log_level: Optional[str]  # Сделаем необязательным
 
 def setup_logger(cfg: LogConfig) -> Logger:
     logger = logging.getLogger(GLOBAL_LOGGER_NAME)
-
-    logger.setLevel(logging.DEBUG)  # Уровень логирования
+    logger.setLevel(getattr(logging, cfg['log_level'].upper()))  # Устанавливаем уровень из конфига
 
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        "%(asctime)s: %(name)s - %(levelname)s - %(message)s"
     )
 
     # Логирование в консоль
     console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)  # Явно задаём уровень для консоли
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    # Логирование в файл, если LOG_TO_FILE=True
-    if "log_file" in cfg:
-        file_handler = logging.FileHandler(cfg.log_file)
+    # Логирование в файл, если указан log_file
+    if "log_file" in cfg and cfg["log_file"]:
+        file_handler = logging.FileHandler(cfg['log_file'])
+        file_handler.setLevel(
+            getattr(logging, cfg.get('file_log_level', 'INFO').upper())  # Уровень по умолчанию DEBUG
+        )
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-
 
     logger.debug(f'Set up logger with configuration: {cfg}')
     return logger
