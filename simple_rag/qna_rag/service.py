@@ -7,7 +7,7 @@ from simple_rag.chats.chat import ChatModel
 from simple_rag.llm.groq import llm
 from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.qna.csv_parser import QnAFileParser
-from simple_rag.qna_rag.engine import build_rag_graph
+from simple_rag.qna_rag.engine import RagDynamicPromptEngine, build_rag_graph
 from typing_extensions import TypedDict
 
 from simple_rag.qna_rag.store import SimpleVectorStore
@@ -25,6 +25,7 @@ class QnaStaticFileService(ChatModel):
     
     store: SimpleVectorStore
     llm: BaseChatModel
+    engine: RagDynamicPromptEngine
     graph: CompiledStateGraph
     
     def __init__(self, config: QnAServiceConfig):
@@ -39,14 +40,17 @@ class QnaStaticFileService(ChatModel):
         self.llm = llm
 
         logger.debug('QnaStaticFileService:: building rag graph...')
-        self.graph = build_rag_graph(
-            self.llm, self.store
-        )
+        self.engine = RagDynamicPromptEngine(self.llm, self.store)
+        self.graph = self.engine.build_graph()
 
         logger.debug('QnaStaticFileService:: init() DONE')
 
     def send(self, id: uuid.UUID, question: str) -> str:
-        answer = self.graph.invoke({"raw_input": question})
+        config = {"configurable": {"thread_id": str(id)}}
+        answer = self.graph.invoke(
+            {"raw_input": question},
+            config=config
+        )
 
         return answer['answer']
 

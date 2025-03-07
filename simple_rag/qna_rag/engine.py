@@ -1,4 +1,5 @@
 from json import tool
+from simple_rag.qna_rag.memory import get_checkpointer
 from simple_rag.qna_rag.state import RagState
 from simple_rag.qna_rag.store import SimpleVectorStore
 from langgraph.graph import START, StateGraph
@@ -111,6 +112,6 @@ class RagDynamicPromptEngine:
             [self.manual_retrieve, self.get_answers, self.answer_based_on_context]
         )
         graph_builder.add_edge(START, "manual_retrieve")
-        graph = graph_builder.compile()
+        graph = graph_builder.compile(checkpointer=get_checkpointer())
 
         return graph
