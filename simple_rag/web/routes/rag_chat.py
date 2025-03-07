@@ -59,6 +59,7 @@ async def send_message(
         raise HTTPException(status_code=404, detail="Chat not found")
 
 
+# FIXME: get rid of /update_prompt, make model update more generic
 @router.post("/update_prompt")
 async def update_model(
     request: UpdateModelRequest,
