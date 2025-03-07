@@ -8,6 +8,10 @@ class ChatModel(abc.ABC):
     @abc.abstractmethod
     def send(self, id: uuid.UUID, message: str) -> str:
         raise NotImplementedError("Must be implemented")
+    
+    @abc.abstractmethod
+    def update(self, new_cfg: dict[str, str]):
+        raise NotImplementedError("Must be implemented")
 
 class HistoryMessage(TypedDict):
     role: str

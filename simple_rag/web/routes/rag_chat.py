@@ -31,6 +31,10 @@ class MessageRequest(BaseModel):
 class MessageResponse(BaseModel):
     response: str
 
+class UpdateModelRequest(BaseModel):
+    chat_id: UUID
+    prompt: str
+
 
 @router.post("/create", response_model=ChatResponse)
 async def create_chat(
@@ -53,6 +57,32 @@ async def send_message(
         return MessageResponse(response=response)
     except KeyError:
         raise HTTPException(status_code=404, detail="Chat not found")
+
+
+@router.post("/update_prompt")
+async def update_model(
+    request: UpdateModelRequest,
+    chat_manager: ChatManager = Depends(get_chat_manager),
+):
+    try:
+        logger.info("Updating model for chat %s", request.chat_id)
+        chat = chat_manager.get_chat(request.chat_id)
+        if not chat:
+            raise ValueError("Chat not found")
+        
+        model = chat.model
+        model.update({
+            "prompt": request.prompt
+        })
+
+        logger.info("Updated model for chat %s successfully", request.chat_id)
+
+        return {"success": True}
+        
+    except Exception as ex:
+        logger.error("Error updating model: %s", ex)
+        return HTTPException(status_code=502, detail="Internal server error")
+
 
 @router.delete("/chat/{chat_id}")
 async def delete_chat(

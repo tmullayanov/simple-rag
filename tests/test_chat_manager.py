@@ -50,6 +50,7 @@ def test_chat_mgr_proxies_to_chat(chat_mgr):
 
     response = chat_mgr.send_message(chat.id, "Hello")
 
+    # actually we break the abstraction a bit here, but it's ok for now.
     assert chat_mgr.get_chat(chat.id).history == [{
         'role': 'user',
         'msg': 'Hello'
@@ -73,4 +74,7 @@ async def test_auto_delete_inactive_chats(chat_mgr):
 class ParrotModel(ChatModel):
     def send(self, id, message):
         return message
+    
+    def update(self, new_cfg: dict[str, str]):
+        pass
 

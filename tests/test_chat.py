@@ -75,6 +75,9 @@ class EmptyModel(ChatModel):
     def send(self, id, message: str):
         pass
 
+    def update(self, new_cfg: dict[str, str]):
+        pass
+
 class MockModel(ChatModel):
 
     messages: list[str]
@@ -85,7 +88,13 @@ class MockModel(ChatModel):
     def send(self, id, message: str):
         self.messages.append(message)
 
+    def update(self, new_cfg: dict[str, str]):
+        pass
+
 class ParrotModel(ChatModel):
 
     def send(self, id, message):
         return message
+    
+    def update(self, new_cfg: dict[str, str]):
+        pass
