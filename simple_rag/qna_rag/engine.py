@@ -6,6 +6,7 @@ from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langchain_core.prompts import PromptTemplate
 from langchain.chat_models.base import BaseChatModel
+from langchain.docstore.document import Document
 
 
 from .prompts import rag_prompt
@@ -41,7 +42,7 @@ class RagDynamicPromptEngine:
         context = "\n\n".join(doc for doc in state["qna_context"])
         messages = self.prompt_template.invoke(
             {
-                "questions": state["questions"],
+                "questions": get_questions_texts(state["questions"]),
                 "answers": context,
                 "raw_input": state["raw_input"],
             }
@@ -62,3 +63,7 @@ class RagDynamicPromptEngine:
     def update(self, new_cfg: dict[str, str]):
         if "prompt" in new_cfg:
             self.change_prompt(new_cfg["prompt"])
+
+
+def get_questions_texts(questions: list[Document]):
+    return [q.page_content for q in questions]
