@@ -7,7 +7,7 @@ from simple_rag.chats.chat import ChatModel
 from simple_rag.llm.groq import llm
 from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.qna.csv_parser import QnAFileParser
-from simple_rag.qna_rag.engine import RagDynamicPromptEngine
+from simple_rag.qna_rag.engine import RagEngineDynamicPrompt
 from typing_extensions import TypedDict
 
 from simple_rag.qna_rag.store import SimpleVectorStore
@@ -25,28 +25,27 @@ class QnAServiceConfig(TypedDict):
 class QnaStaticFileService(ChatModel):
     store: SimpleVectorStore
     llm: BaseChatModel
-    engine: RagDynamicPromptEngine
-    graph: CompiledStateGraph
+    engine: RagEngineDynamicPrompt
+    rag: CompiledStateGraph
 
     def __init__(self, config: QnAServiceConfig):
         logger.debug("QnaStaticFileService::init()")
 
-        parser = QnAFileParser(config["qna_path"], config["qna_delimiter"])
-        qna = parser.build_qna()
+        parser = QnAFileParser(**config)
+        qna = parser.parse_qna()
 
-        self.store = SimpleVectorStore()
-        self.store.store_qna(qna)
+        self.store = SimpleVectorStore(qna)
         self.llm = llm
 
         logger.debug("QnaStaticFileService:: building rag graph...")
-        self.engine = RagDynamicPromptEngine(self.llm, self.store)
-        self.graph = self.engine.build_graph()
+        self.engine = RagEngineDynamicPrompt(self.llm, self.store)
+        self.rag = self.engine.build_rag()
 
         logger.debug("QnaStaticFileService:: init() DONE")
 
     def send(self, id: uuid.UUID, question: str) -> str:
         config = {"configurable": {"thread_id": str(id)}}
-        answer = self.graph.invoke({"raw_input": question}, config=config)
+        answer = self.rag.invoke({"raw_input": question}, config=config)
 
         return answer["answer"]
 

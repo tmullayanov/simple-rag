@@ -1,3 +1,4 @@
+from typing import Optional
 from typing_extensions import TypedDict
 
 from langchain_core.vectorstores import InMemoryVectorStore
@@ -12,8 +13,11 @@ class SimpleVectorStore:
     doc_ids: list[str]
     qna: AbstractQnA
 
-    def __init__(self):
+    def __init__(self, qna: Optional[AbstractQnA] = None):
         self.vector_store = SimpleVectorStore.make_vector_store()
+
+        if qna:
+            self.store_qna(qna)
 
     @classmethod
     def make_vector_store(cls):
@@ -40,3 +44,6 @@ class SimpleVectorStore:
 
     def lookup_answers(self, question: str):
         return self.qna.lookup_answer(question)
+
+    def as_retriever(self):
+        return self.vector_store.as_retriever()
