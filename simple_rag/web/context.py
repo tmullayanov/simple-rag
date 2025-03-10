@@ -6,7 +6,6 @@ from simple_rag.web.config import APP_SETTINGS, AppSettings
 
 
 class AppContext:
-
     logger: Logger
     chatManager: ChatManager
 
@@ -15,10 +14,10 @@ class AppContext:
         self.chatManager = ChatManager()
 
     async def on_startup(self):
-        self.logger.debug('AppContext STARTUP')
+        self.logger.debug("AppContext STARTUP")
 
     async def on_shutdown(self):
-        self.logger.debug('AppContext SHUTDOWN')
+        self.logger.debug("AppContext SHUTDOWN")
 
 
 APP_CTX = AppContext(APP_SETTINGS)
@@ -27,7 +26,5 @@ APP_CTX = AppContext(APP_SETTINGS)
 def get_chat_manager():
     return APP_CTX.chatManager
 
-__all__ = [
-    'AppContext',
-    'APP_CTX'
-]
+
+__all__ = ["AppContext", "APP_CTX"]

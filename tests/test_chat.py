@@ -6,9 +6,9 @@ from simple_rag.chats.chat import Chat, ChatModel
 
 @pytest.fixture
 def dummy_chat():
-    '''
+    """
     Boilerplate for setting up chat.
-    '''
+    """
     model = EmptyModel()
     chat = Chat(model)
 
@@ -19,8 +19,8 @@ def test_chat_init(dummy_chat):
     chat, _ = dummy_chat
     assert chat is not None
 
-def test_chat_has_unique_id():
 
+def test_chat_has_unique_id():
     model = EmptyModel()
     chat1 = Chat(model)
     chat2 = Chat(model)
@@ -30,56 +30,51 @@ def test_chat_has_unique_id():
 
     assert chat1.id != chat2.id
 
-def test_chat_has_model_attached(dummy_chat):
 
+def test_chat_has_model_attached(dummy_chat):
     chat, _ = dummy_chat
 
-    assert hasattr(chat, 'model')
+    assert hasattr(chat, "model")
     assert isinstance(chat.model, ChatModel)
 
 
 def test_chat_can_send_message_to_model_no_raises(dummy_chat):
     chat, _ = dummy_chat
 
-    chat.send('Hello')
+    chat.send("Hello")
+
 
 def test_chat_actually_uses_model():
     model = MockModel()
     chat = Chat(model)
 
-    msg = 'Hello'
+    msg = "Hello"
     chat.send(msg)
 
     assert model.messages == [msg]
+
 
 def test_chat_keep_track_of_messages():
     parrot = ParrotModel()
     chat = Chat(parrot)
 
-    msg = 'Hello'
+    msg = "Hello"
     chat.send(msg)
 
-    au_history = [{
-        'role': 'user',
-        'msg': msg
-    }, {
-        'role': 'model',
-        'msg': msg
-    }]
+    au_history = [{"role": "user", "msg": msg}, {"role": "model", "msg": msg}]
 
     assert chat.history == au_history
 
 
 class EmptyModel(ChatModel):
-    
     def send(self, id, message: str):
         pass
 
     def update(self, new_cfg: dict[str, str]):
         pass
 
-class MockModel(ChatModel):
 
+class MockModel(ChatModel):
     messages: list[str]
 
     def __init__(self):
@@ -91,10 +86,10 @@ class MockModel(ChatModel):
     def update(self, new_cfg: dict[str, str]):
         pass
 
-class ParrotModel(ChatModel):
 
+class ParrotModel(ChatModel):
     def send(self, id, message):
         return message
-    
+
     def update(self, new_cfg: dict[str, str]):
         pass

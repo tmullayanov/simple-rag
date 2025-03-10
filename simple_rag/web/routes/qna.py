@@ -12,14 +12,19 @@ router = APIRouter(prefix="/qna")
 
 logger = logging.getLogger(GLOBAL_LOGGER_NAME)
 
+
 def get_qna_service(cfg: QnAServiceConfig):
     return QnaStaticFileService(cfg)
 
+
 @router.get("/")
-async def create_qna_rag(service: QnaStaticFileService = Depends(lambda: get_qna_service(APP_SETTINGS.model_dump()))):
-    
+async def create_qna_rag(
+    service: QnaStaticFileService = Depends(
+        lambda: get_qna_service(APP_SETTINGS.model_dump())
+    ),
+):
     logger.info(service.store.doc_ids)
     chat = Chat(model=service)
     answer = chat.send("Чем машинное обучение отличается от глубокого?")
-    
+
     return JSONResponse(content={"message": answer})
