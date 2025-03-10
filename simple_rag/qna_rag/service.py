@@ -54,4 +54,11 @@ class QnaStaticFileService(ChatModel):
 
         return answer['answer']
 
+    def update(self, new_cfg: dict[str, str]):
+        logger.debug('QnaStaticFileService::update()')
+        
+        if 'prompt' in new_cfg:
+            self.engine.change_prompt(new_cfg['prompt'])
+            logger.debug('Updated prompt for QnaStaticFileService')
+        
     
