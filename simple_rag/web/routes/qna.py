@@ -5,7 +5,7 @@ import logging
 
 from simple_rag.chats.chat import Chat
 from simple_rag.logger import GLOBAL_LOGGER_NAME
-from simple_rag.qna_rag.service import QnAServiceConfig, QnaStaticFileService
+from simple_rag.faq_rag.service import QnAServiceConfig, QnaStaticFileService
 from simple_rag.web.config import APP_SETTINGS
 
 router = APIRouter(prefix="/qna")

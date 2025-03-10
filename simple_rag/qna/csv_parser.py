@@ -1,6 +1,6 @@
 import pandas as pd
 
-from simple_rag.qna.pseudo_db import AbstractQnA, SimpleQna
+from simple_rag.models.qna_rag.qna import AbstractQnA, SimpleQna
 
 
 class QnAFileParser:
