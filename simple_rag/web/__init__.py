@@ -2,14 +2,13 @@ import uvicorn
 from fastapi import FastAPI
 
 from .contextmanager import startup_and_shutdown
-from .routes import qna_router, rag_assistant_router
+from .routes import rag_assistant_router
 from .config import APP_SETTINGS
 
 
 app = FastAPI(lifespan=startup_and_shutdown)
 
 
-app.include_router(qna_router, tags=["rag", "qna"])
 app.include_router(rag_assistant_router, tags=["rag", "assistant"])
 
 
