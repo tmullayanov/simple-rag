@@ -6,7 +6,7 @@ import logging
 from simple_rag.logger import GLOBAL_LOGGER_NAME
 
 
-logger = logging.getLogger(GLOBAL_LOGGER_NAME)
+from loguru import logger
 
 
 class ChatManager:

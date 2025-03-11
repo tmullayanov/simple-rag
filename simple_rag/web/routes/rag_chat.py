@@ -9,15 +9,14 @@ from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.chats import ChatManager
 from simple_rag.models.qna_rag.model import QnAServiceConfig, QnaStaticFileModel
 from simple_rag.web.config import APP_SETTINGS
-from simple_rag.web.context import get_chat_manager
+from simple_rag.web.context import APP_CTX, get_chat_manager
+from loguru import logger
 
 router = APIRouter(prefix="/rag_chat")
 
-logger = logging.getLogger(GLOBAL_LOGGER_NAME)
 
-
-def get_qna_service(cfg: QnAServiceConfig):
-    return QnaStaticFileModel(cfg)
+def get_qna_service(cfg: QnAServiceConfig, llm):
+    return QnaStaticFileModel(cfg, llm)
 
 
 # Модели данных для API
@@ -42,7 +41,7 @@ class UpdateModelRequest(BaseModel):
 @router.post("/create", response_model=ChatResponse)
 async def create_chat(
     chat_manager: ChatManager = Depends(get_chat_manager),
-    model: ChatModel = Depends(lambda: get_qna_service(APP_SETTINGS.model_dump())),
+    model: ChatModel = Depends(lambda: get_qna_service(APP_SETTINGS.model_dump(), APP_CTX.llm)),
 ):
     """Создание нового чата"""
     chat = chat_manager.create_chat(model)

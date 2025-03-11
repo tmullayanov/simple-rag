@@ -4,7 +4,6 @@ from langgraph.graph.state import CompiledStateGraph
 from langchain.chat_models.base import BaseChatModel
 
 from simple_rag.chats.chat import ChatModel
-from simple_rag.llm.groq import llm
 from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.models.qna_rag.parser.csv_parser import QnAFileParser
 from typing_extensions import TypedDict
@@ -13,7 +12,7 @@ from .store import SimpleVectorStore
 from .engine import RagEngineDynamicPrompt
 
 
-logger = logging.getLogger(GLOBAL_LOGGER_NAME)
+from loguru import logger
 
 
 class QnAServiceConfig(TypedDict):
@@ -27,7 +26,7 @@ class QnaStaticFileModel(ChatModel):
     engine: RagEngineDynamicPrompt
     rag: CompiledStateGraph
 
-    def __init__(self, config: QnAServiceConfig):
+    def __init__(self, config: QnAServiceConfig, llm: BaseChatModel):
         logger.debug("QnaStaticFileService::init()")
 
         parser = QnAFileParser(**config)
