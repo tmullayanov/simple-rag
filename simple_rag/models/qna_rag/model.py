@@ -6,7 +6,7 @@ from langchain.chat_models.base import BaseChatModel
 from simple_rag.chats.chat import ChatModel
 from simple_rag.llm.groq import llm
 from simple_rag.logger import GLOBAL_LOGGER_NAME
-from simple_rag.qna.csv_parser import QnAFileParser
+from simple_rag.models.qna_rag.parser.csv_parser import QnAFileParser
 from typing_extensions import TypedDict
 
 from .store import SimpleVectorStore
@@ -21,7 +21,7 @@ class QnAServiceConfig(TypedDict):
     qna_delimiter: str
 
 
-class QnaStaticFileService(ChatModel):
+class QnaStaticFileModel(ChatModel):
     store: SimpleVectorStore
     llm: BaseChatModel
     engine: RagEngineDynamicPrompt

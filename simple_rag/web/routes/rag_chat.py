@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from simple_rag.chats.chat import ChatModel
 from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.chats import ChatManager
-from simple_rag.models.qna_rag.service import QnAServiceConfig, QnaStaticFileService
+from simple_rag.models.qna_rag.model import QnAServiceConfig, QnaStaticFileModel
 from simple_rag.web.config import APP_SETTINGS
 from simple_rag.web.context import get_chat_manager
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(GLOBAL_LOGGER_NAME)
 
 
 def get_qna_service(cfg: QnAServiceConfig):
-    return QnaStaticFileService(cfg)
+    return QnaStaticFileModel(cfg)
 
 
 # Модели данных для API
