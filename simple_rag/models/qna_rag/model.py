@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 import uuid
 from langgraph.graph.state import CompiledStateGraph
 from langchain.chat_models.base import BaseChatModel
@@ -25,13 +26,10 @@ class QnaStaticFileModel(ChatModel):
     engine: RagEngineDynamicPrompt
     rag: CompiledStateGraph
 
-    def __init__(self, config: QnAServiceConfig, llm: BaseChatModel):
+    def __init__(self, store: QuestionVectorStore, llm: BaseChatModel):
         logger.debug("QnaStaticFileService::init()")
 
-        parser = QnAFileParser(**config)
-        qna = parser.parse_qna()
-
-        self.store = QuestionVectorStore(qna)
+        self.store = store
         self.llm = llm
 
         logger.debug("QnaStaticFileService:: building rag graph...")
@@ -54,5 +52,18 @@ class QnaStaticFileModel(ChatModel):
             logger.debug("Updated prompt for QnaStaticFileService")
 
 
+# this model supposes that there is only one immutable vector store
+_store: Optional[QuestionVectorStore] = None
+
+def get_question_store(config: QnAServiceConfig) -> QuestionVectorStore:
+    global _store
+    if _store is None:
+        parser = QnAFileParser(**config)
+        qna = parser.parse_qna()
+        _store = QuestionVectorStore(qna)
+    return _store
+
 def build_static_file_model(config: QnAServiceConfig, llm: BaseChatModel) -> QnaStaticFileModel:
-    return QnaStaticFileModel(config=config, llm=llm)
+    store = get_question_store(config)
+    return QnaStaticFileModel(store=store, llm=llm)
+

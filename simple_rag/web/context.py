@@ -1,7 +1,7 @@
 from logging import Logger
 from langchain.chat_models.base import BaseChatModel
 
-from simple_rag import llm
+from simple_rag.llm import llm
 from simple_rag.chats import ChatManager
 from simple_rag.logger import setup_logger
 from simple_rag.web.config import APP_SETTINGS, AppSettings

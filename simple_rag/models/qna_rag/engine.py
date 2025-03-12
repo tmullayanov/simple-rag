@@ -1,4 +1,3 @@
-from json import tool
 from simple_rag.models.qna_rag.memory import get_checkpointer
 from simple_rag.models.qna_rag.state import RagState
 from simple_rag.models.qna_rag.store import QuestionVectorStore
