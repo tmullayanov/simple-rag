@@ -5,9 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from simple_rag.chats.chat import ChatModel
-from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.chats import ChatManager
-from simple_rag.models.qna_rag.model import QnAServiceConfig, QnaStaticFileModel
+from simple_rag.models.qna_rag.model import QnAServiceConfig, QnaStaticFileModel, build_static_file_model
 from simple_rag.web.config import APP_SETTINGS
 from simple_rag.web.context import APP_CTX, get_chat_manager
 from loguru import logger
@@ -16,7 +15,7 @@ router = APIRouter(prefix="/rag_chat")
 
 
 def get_qna_service(cfg: QnAServiceConfig, llm):
-    return QnaStaticFileModel(cfg, llm)
+    return build_static_file_model(cfg, llm)
 
 
 # Модели данных для API

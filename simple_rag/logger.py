@@ -5,13 +5,10 @@ import os
 from pathlib import Path
 
 
-GLOBAL_LOGGER_NAME = "simple_rag_logger"
-
-
 class LogConfig(TypedDict):
     log_level: str
     log_file: Optional[str]
-    file_log_level: Optional[str]  # Сделаем необязательным
+    file_log_level: Optional[str]
 
 
 def setup_logger(cfg: LogConfig):
@@ -19,7 +16,6 @@ def setup_logger(cfg: LogConfig):
     logger.remove()
     logger.add(sys.stdout, level=cfg["log_level"].upper())
 
-    # Логирование в файл, если указан log_file
     if "log_file" in cfg and cfg["log_file"]:
         Path(os.path.dirname(cfg["log_file"])).mkdir(parents=True, exist_ok=True)
         logger.add(

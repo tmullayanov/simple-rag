@@ -7,13 +7,13 @@ from langchain.docstore.document import Document
 from .qna import AbstractQnA
 
 
-class SimpleVectorStore:
+class QuestionVectorStore:
     vector_store: InMemoryVectorStore
     doc_ids: list[str]
     qna: AbstractQnA
 
     def __init__(self, qna: Optional[AbstractQnA] = None):
-        self.vector_store = SimpleVectorStore.make_vector_store()
+        self.vector_store = QuestionVectorStore.make_vector_store()
 
         if qna:
             self.store_qna(qna)

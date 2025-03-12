@@ -1,7 +1,7 @@
 from json import tool
 from simple_rag.models.qna_rag.memory import get_checkpointer
 from simple_rag.models.qna_rag.state import RagState
-from simple_rag.models.qna_rag.store import SimpleVectorStore
+from simple_rag.models.qna_rag.store import QuestionVectorStore
 from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langchain_core.prompts import PromptTemplate
@@ -36,7 +36,7 @@ class RagEngineDynamicPrompt:
     """
 
     llm: BaseChatModel
-    vector_store: SimpleVectorStore
+    vector_store: QuestionVectorStore
     checkpointer: MemorySaver
 
     prompt_template: PromptTemplate = rag_prompt
@@ -44,7 +44,7 @@ class RagEngineDynamicPrompt:
     def __init__(
         self,
         llm: BaseChatModel,
-        vector_store: SimpleVectorStore,
+        vector_store: QuestionVectorStore,
         checkpointer=get_checkpointer(),
     ):
         """

@@ -4,11 +4,10 @@ from langgraph.graph.state import CompiledStateGraph
 from langchain.chat_models.base import BaseChatModel
 
 from simple_rag.chats.chat import ChatModel
-from simple_rag.logger import GLOBAL_LOGGER_NAME
 from simple_rag.models.qna_rag.parser.csv_parser import QnAFileParser
 from typing_extensions import TypedDict
 
-from .store import SimpleVectorStore
+from .store import QuestionVectorStore
 from .engine import RagEngineDynamicPrompt
 
 
@@ -21,7 +20,7 @@ class QnAServiceConfig(TypedDict):
 
 
 class QnaStaticFileModel(ChatModel):
-    store: SimpleVectorStore
+    store: QuestionVectorStore
     llm: BaseChatModel
     engine: RagEngineDynamicPrompt
     rag: CompiledStateGraph
@@ -32,7 +31,7 @@ class QnaStaticFileModel(ChatModel):
         parser = QnAFileParser(**config)
         qna = parser.parse_qna()
 
-        self.store = SimpleVectorStore(qna)
+        self.store = QuestionVectorStore(qna)
         self.llm = llm
 
         logger.debug("QnaStaticFileService:: building rag graph...")
@@ -53,3 +52,7 @@ class QnaStaticFileModel(ChatModel):
         if "prompt" in new_cfg:
             self.engine.change_prompt(new_cfg["prompt"])
             logger.debug("Updated prompt for QnaStaticFileService")
+
+
+def build_static_file_model(config: QnAServiceConfig, llm: BaseChatModel) -> QnaStaticFileModel:
+    return QnaStaticFileModel(config=config, llm=llm)
