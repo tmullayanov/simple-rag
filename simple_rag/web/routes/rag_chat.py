@@ -41,7 +41,9 @@ class UpdateModelRequest(BaseModel):
 @router.post("/create", response_model=ChatResponse)
 async def create_chat(
     chat_manager: ChatManager = Depends(get_chat_manager),
-    model: ChatModel = Depends(lambda: get_qna_service(APP_SETTINGS.model_dump(), APP_CTX.llm)),
+    model: ChatModel = Depends(
+        lambda: get_qna_service(APP_SETTINGS.model_dump(), APP_CTX.llm)
+    ),
 ):
     """Создание нового чата"""
     chat = chat_manager.create_chat(model)

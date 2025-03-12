@@ -7,9 +7,11 @@ from unittest.mock import MagicMock
 
 from simple_rag.chats.chat import Chat, ChatModel
 
+
 @pytest.fixture
 async def chat_mgr():
     yield ChatManager()
+
 
 def test_create_chat_manager(chat_mgr):
     assert chat_mgr is not None
@@ -58,8 +60,10 @@ def test_chat_mgr_proxies_to_chat(chat_mgr):
 @pytest.mark.asyncio
 async def test_auto_delete_inactive_chats(chat_mgr):
     chat_mgr = ChatManager(check_interval=1.0)
-    chat_mgr.INACTIVITY_TIMEOUT = timedelta(seconds=2) # Override the default inactivity timeout for faster testing
-    
+    chat_mgr.INACTIVITY_TIMEOUT = timedelta(
+        seconds=2
+    )  # Override the default inactivity timeout for faster testing
+
     chat = chat_mgr.create_chat(model=MagicMock())
     assert chat_mgr.get_chat(chat.id) == chat
 
@@ -67,7 +71,7 @@ async def test_auto_delete_inactive_chats(chat_mgr):
         await asyncio.sleep(1)
         if chat_mgr.get_chat(chat.id) is None:
             break
-    
+
     assert chat_mgr.get_chat(chat.id) is None
     chat_mgr.stop()
 

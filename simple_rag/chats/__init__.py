@@ -11,8 +11,8 @@ class ChatManager:
     INACTIVITY_TIMEOUT = timedelta(minutes=5)  # FIXME: use config
 
     _chats: dict[UUID, Chat]
-    _check_interval: int # in seconds
-    _running: bool # indicates whether the background task is running
+    _check_interval: int  # in seconds
+    _running: bool  # indicates whether the background task is running
 
     def __init__(self, check_interval: int = 0):
         logger.info("Initializing ChatManager")
@@ -51,7 +51,8 @@ class ChatManager:
             logger.debug("Running cleanup task")
             current_time = datetime.now()
             inactive_chats = [
-                chat_id for chat_id, chat in self._chats.items()
+                chat_id
+                for chat_id, chat in self._chats.items()
                 if current_time - chat.last_active > self.INACTIVITY_TIMEOUT
             ]
             for chat_id in inactive_chats:

@@ -4,7 +4,6 @@ from typing import Optional, TypedDict
 import os
 from pathlib import Path
 
-import loguru
 
 GLOBAL_LOGGER_NAME = "simple_rag_logger"
 
@@ -16,16 +15,19 @@ class LogConfig(TypedDict):
 
 
 def setup_logger(cfg: LogConfig):
-    
-    level = cfg.get('log_level', 'INFO')
+    level = cfg.get("log_level", "INFO")
     logger.remove()
     logger.add(sys.stdout, level=cfg["log_level"].upper())
 
     # Логирование в файл, если указан log_file
     if "log_file" in cfg and cfg["log_file"]:
         Path(os.path.dirname(cfg["log_file"])).mkdir(parents=True, exist_ok=True)
-        logger.add(cfg["log_file"], rotation="2 MB", compression="zip", level=cfg.get('file_log_level', level).upper())
-    
+        logger.add(
+            cfg["log_file"],
+            rotation="2 MB",
+            compression="zip",
+            level=cfg.get("file_log_level", level).upper(),
+        )
 
     logger.debug(f"Set up logger with configuration: {cfg}")
     return logger

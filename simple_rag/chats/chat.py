@@ -3,6 +3,7 @@ from typing import TypedDict
 import uuid
 from datetime import timedelta, datetime
 
+
 class ChatModel(abc.ABC):
     @abc.abstractmethod
     def send(self, id: uuid.UUID, message: str) -> str:
