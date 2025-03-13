@@ -20,7 +20,7 @@ class QnAServiceConfig(TypedDict):
     qna_delimiter: str
 
 
-class QnaStaticFileModel(ChatModel):
+class QnaStaticFileQuestionVectoredModel(ChatModel):
     store: QuestionVectorStore
     llm: BaseChatModel
     engine: RagEngineDynamicPrompt
@@ -63,7 +63,8 @@ def get_question_store(config: QnAServiceConfig) -> QuestionVectorStore:
         _store = QuestionVectorStore(qna)
     return _store
 
-def build_static_file_model(config: QnAServiceConfig, llm: BaseChatModel) -> QnaStaticFileModel:
+# this function is used in ModelCreator and has to follow the signature
+def build_static_file_model(llm: BaseChatModel, config: QnAServiceConfig) -> QnaStaticFileQuestionVectoredModel:
     store = get_question_store(config)
-    return QnaStaticFileModel(store=store, llm=llm)
+    return QnaStaticFileQuestionVectoredModel(store=store, llm=llm)
 

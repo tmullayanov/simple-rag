@@ -6,9 +6,10 @@ from pydantic import BaseModel
 
 from simple_rag.chats.chat import ChatModel
 from simple_rag.chats import ChatManager
-from simple_rag.models.qna_rag.model import QnAServiceConfig, QnaStaticFileModel, build_static_file_model
+from simple_rag.models import ModelCreator
+from simple_rag.models.qna_rag.model import QnAServiceConfig, QnaStaticFileQuestionVectoredModel, build_static_file_model
 from simple_rag.web.config import APP_SETTINGS
-from simple_rag.web.context import APP_CTX, get_chat_manager
+from simple_rag.web.context import APP_CTX, get_chat_manager, get_model_creator
 from loguru import logger
 
 router = APIRouter(prefix="/rag_chat")
@@ -19,6 +20,9 @@ def get_qna_service(cfg: QnAServiceConfig, llm):
 
 
 # Модели данных для API
+class ChatCreateRequest(BaseModel):
+    model: str
+
 class ChatResponse(BaseModel):
     chat_id: UUID
 
@@ -39,15 +43,19 @@ class UpdateModelRequest(BaseModel):
 
 @router.post("/create", response_model=ChatResponse)
 async def create_chat(
+    chat_create_request: ChatCreateRequest,
     chat_manager: ChatManager = Depends(get_chat_manager),
-    model: ChatModel = Depends(
-        lambda: get_qna_service(APP_SETTINGS.model_dump(), APP_CTX.llm)
-    ),
+    model_creator: ModelCreator = Depends(get_model_creator),
 ):
     """Создание нового чата"""
-    chat = chat_manager.create_chat(model)
-    logger.info("Chat created with id: %s", chat.id)
-    return ChatResponse(chat_id=chat.id)
+    try:
+        model = model_creator.build(chat_create_request.model)
+        chat = chat_manager.create_chat(model)
+        logger.info("Chat created with id: %s", chat.id)
+
+        return ChatResponse(chat_id=chat.id)
+    except ValueError as ex:
+        raise HTTPException(status_code=400, detail=ex.args)
 
 
 @router.post("/message", response_model=MessageResponse)
