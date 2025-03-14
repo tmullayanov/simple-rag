@@ -1,18 +1,16 @@
-import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from simple_rag.chats.chat import ChatModel
 from simple_rag.chats import ChatManager
 from simple_rag.models import ModelCreator
-from simple_rag.models.qna_rag.model import QnAServiceConfig, QnaStaticFileQuestionVectoredModel, build_static_file_model
-from simple_rag.web.config import APP_SETTINGS
-from simple_rag.web.context import APP_CTX, get_chat_manager, get_model_creator
+from simple_rag.models.qna_rag.model import QnAServiceConfig, build_static_file_model
+from simple_rag.web.context import get_chat_manager, get_model_creator
 from loguru import logger
 
-router = APIRouter(prefix="/rag_chat")
+router = APIRouter(prefix="/chat")
 
 
 def get_qna_service(cfg: QnAServiceConfig, llm):
@@ -51,7 +49,7 @@ async def create_chat(
     try:
         model = model_creator.build(chat_create_request.model)
         chat = chat_manager.create_chat(model)
-        logger.info("Chat created with id: %s", chat.id)
+        logger.info("Chat created with id: %s" % chat.id)
 
         return ChatResponse(chat_id=chat.id)
     except ValueError as ex:
@@ -64,7 +62,7 @@ async def send_message(
 ):
     """Отправка сообщения в существующий чат"""
     try:
-        logger.info("Sending message to chat %s", request.chat_id)
+        logger.info("Sending message to chat %s" % request.chat_id)
         response = chat_manager.send_message(request.chat_id, request.message)
         return MessageResponse(response=response)
     except KeyError:
@@ -77,7 +75,7 @@ async def update_model(
     chat_manager: ChatManager = Depends(get_chat_manager),
 ):
     try:
-        logger.info("Updating model for chat %s", request.chat_id)
+        logger.info("Updating model for chat %s" % request.chat_id)
         chat = chat_manager.get_chat(request.chat_id)
         if not chat:
             raise ValueError("Chat not found")
@@ -85,23 +83,23 @@ async def update_model(
         model = chat.model
         model.update({"prompt": request.prompt})
 
-        logger.info("Updated model for chat %s successfully", request.chat_id)
+        logger.info("Updated model for chat %s successfully" % request.chat_id)
 
-        return {"success": True}
+        return JSONResponse(content={"success": True})
 
     except Exception as ex:
-        logger.error("Error updating model: %s", ex)
+        logger.error("Error updating model: %s" % ex)
         return HTTPException(status_code=502, detail="Internal server error")
 
 
-@router.delete("/chat/{chat_id}")
+@router.delete("/{chat_id}")
 async def delete_chat(
     chat_id: UUID, chat_manager: ChatManager = Depends(get_chat_manager)
 ):
     """Удаление существующего чата"""
     try:
         chat_manager.remove_chat(chat_id)
-        logger.info("Deleted chat with id: %s", chat_id)
+        logger.info("Deleted chat with id: %s" % chat_id)
         return {"status": "success", "message": "Chat deleted"}
     except KeyError:
         raise HTTPException(status_code=404, detail="Chat not found")
