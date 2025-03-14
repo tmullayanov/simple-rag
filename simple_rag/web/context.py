@@ -42,5 +42,8 @@ def get_chat_manager():
 def get_model_creator():
     return APP_CTX.modelCreator
 
+def get_default_llm():
+    return APP_CTX.llm
+
 
 __all__ = ["AppContext", "APP_CTX"]
