@@ -53,6 +53,7 @@ async def create_chat(
 
         return ChatResponse(chat_id=chat.id)
     except ValueError as ex:
+        logger.error("Could not create chat: %s" % ex)
         raise HTTPException(status_code=400, detail=ex.args)
 
 
@@ -66,7 +67,11 @@ async def send_message(
         response = chat_manager.send_message(request.chat_id, request.message)
         return MessageResponse(response=response)
     except KeyError:
+        logger.error("Error while sending message! Chat not found!")
         raise HTTPException(status_code=404, detail="Chat not found")
+    except Exception as ex:
+        logger.error("Error while sending message: %s" % ex)
+        raise HTTPException(status_code=502, detail="Internal server error")
 
 
 @router.post("/update_model")
@@ -102,4 +107,6 @@ async def delete_chat(
         logger.info("Deleted chat with id: %s" % chat_id)
         return {"status": "success", "message": "Chat deleted"}
     except KeyError:
+        # TODO: discuss whether it is better to return HTTP 204 (No Content) here and warn.
+        logger.error("Error deleting chat! Chat not found!")
         raise HTTPException(status_code=404, detail="Chat not found")
