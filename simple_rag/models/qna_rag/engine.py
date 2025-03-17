@@ -1,4 +1,3 @@
-from simple_rag.models.qna_rag.memory import get_checkpointer
 from simple_rag.models.qna_rag.state import RagState
 from simple_rag.models.qna_rag.store import QuestionVectorStore
 from langgraph.graph import START, StateGraph
@@ -44,7 +43,6 @@ class RagEngineDynamicPrompt:
         self,
         llm: BaseChatModel,
         vector_store: QuestionVectorStore,
-        checkpointer=get_checkpointer(),
     ):
         """
         Class initialization.
@@ -56,7 +54,7 @@ class RagEngineDynamicPrompt:
         """
         self.llm = llm
         self.vector_store = vector_store
-        self.checkpointer = checkpointer
+        self.checkpointer = MemorySaver()
 
     def manual_retrieve(self, state: RagState):
         """
