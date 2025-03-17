@@ -11,7 +11,6 @@ from typing_extensions import TypedDict
 from .store import QuestionVectorStore
 from .engine import RagEngineDynamicPrompt
 
-
 from loguru import logger
 
 
@@ -55,6 +54,7 @@ class QnaStaticFileQuestionVectoredModel(ChatModel):
 # this model supposes that there is only one immutable vector store
 _store: Optional[QuestionVectorStore] = None
 
+
 def get_question_store(config: QnAServiceConfig) -> QuestionVectorStore:
     global _store
     if _store is None:
@@ -63,8 +63,8 @@ def get_question_store(config: QnAServiceConfig) -> QuestionVectorStore:
         _store = QuestionVectorStore(qna)
     return _store
 
+
 # this function is used in ModelCreator and has to follow the signature
 def build_static_file_model(llm: BaseChatModel, config: QnAServiceConfig) -> QnaStaticFileQuestionVectoredModel:
     store = get_question_store(config)
     return QnaStaticFileQuestionVectoredModel(store=store, llm=llm)
-
