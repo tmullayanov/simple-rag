@@ -42,14 +42,14 @@ class ClassicRagModel(ChatModel):
 
     def _build_graph(self):
         graph_builder = StateGraph(RagState).add_sequence([self._retrieve, self._generate])
-        graph_builder.add_edge(START, "retrieve")
+        graph_builder.add_edge(START, "_retrieve")
         graph = graph_builder.compile()
 
         self.graph = graph
 
     def send(self, conversation_id: uuid.UUID, message: str) -> str:
         config = {"configurable": {"thread_id": str(id)}}
-        answer = self.graph.invoke({"raw_input": message}, config=config)
+        answer = self.graph.invoke({"question": message}, config=config)
 
         return answer["answer"]
 

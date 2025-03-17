@@ -7,7 +7,7 @@ from loguru import logger
 
 from .csv_parser import parse_csv
 from .model import ClassicRagModel
-from .store import populate_vector_store, embeddings
+from .store import embeddings
 
 _store: Optional[VectorStore] = None
 
