@@ -6,7 +6,9 @@ from .routes import rag_assistant_router, summarizer_router, models_router
 from .config import APP_SETTINGS
 
 
-app = FastAPI(lifespan=startup_and_shutdown)
+app = FastAPI(
+    lifespan=startup_and_shutdown,
+    )
 
 
 app.include_router(rag_assistant_router, tags=["rag", "assistant"])

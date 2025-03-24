@@ -48,7 +48,7 @@ class ClassicRagModel(ChatModel):
         self.graph = graph
 
     def send(self, conversation_id: uuid.UUID, message: str) -> str:
-        config = {"configurable": {"thread_id": str(id)}}
+        config = {"configurable": {"thread_id": str(conversation_id)}}
         answer = self.graph.invoke({"question": message}, config=config)
 
         return answer["answer"]
