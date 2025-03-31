@@ -33,9 +33,9 @@ class AppContext:
         self.logger.debug("AppContext STARTUP")
         # FIXME: init llm here based on config
         self.llm = llm
-        self.modelCreator = ModelCreator(llm=llm, config=self.settings.model_dump())
+        self.modelCreator = ModelCreator(llm=llm, embeddings=self.embeddings, config=self.settings.model_dump())
         self.knowledge_base_mgr = KnowledgeBaseManager(
-            llm=llm, embeddings=self.embeddings
+            llm=llm, embeddings=self.embeddings, app_config=self.settings.model_dump()
         )
 
     async def on_shutdown(self):
@@ -55,6 +55,10 @@ def get_model_creator():
 
 def get_default_llm():
     return APP_CTX.llm
+
+
+def get_knowledge_base_manager():
+    return APP_CTX.knowledge_base_mgr
 
 
 __all__ = ["AppContext", "APP_CTX"]

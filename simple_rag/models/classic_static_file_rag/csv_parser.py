@@ -10,6 +10,7 @@ def parse_csv(filename) -> list[Document]:
             "quotechar": '"',
             "fieldnames": ["Question, Answer"],
         },
+        encoding="utf-8",
     )
 
     return loader.load()

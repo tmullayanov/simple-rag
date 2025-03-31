@@ -4,6 +4,10 @@ from langchain.chat_models.base import BaseChatModel
 from langchain.embeddings.base import Embeddings
 from loguru import logger
 
+from simple_rag.models.classic_static_file_rag import (
+    build_classic_rag_knowledgebase_model,
+)
+
 from .base import KnowledgeBaseModel
 
 
@@ -14,13 +18,18 @@ class KnowledgeBaseManager:
 
     _llm: BaseChatModel
     _embeddings: Embeddings
+    _app_config: dict
 
-    def __init__(self, llm: BaseChatModel, embeddings: Embeddings):
+    builders: dict[
+        str, Callable[[BaseChatModel, Embeddings, dict], KnowledgeBaseModel]
+    ] = {"classic": build_classic_rag_knowledgebase_model}
+
+    def __init__(self, llm: BaseChatModel, embeddings: Embeddings, app_config: dict):
         self._llm = llm
         self._embeddings = embeddings
+        self._app_config = app_config
 
     models: dict[str, KnowledgeBaseModel] = {}
-    builders: dict[str, Callable[[], KnowledgeBaseModel]] = {}
 
     @staticmethod
     def register_model(key: str, model: Callable[[], KnowledgeBaseModel]):
@@ -31,7 +40,9 @@ class KnowledgeBaseManager:
         try:
             if key not in self.models:
                 logger.debug(f"Model {key=} not found, creating from builders...")
-                self.models[key] = self.builders[key]()
+                self.models[key] = KnowledgeBaseManager.builders[key](
+                    self._llm, self._embeddings, self._app_config
+                )
 
             return self.models[key]
         except KeyError as e:
