@@ -7,8 +7,10 @@ class KnowledgeBaseModel(abc.ABC):
     pass
 
 class KnowledgeBaseMgr():
+    '''
+    Provides access to registered knowledge base models
+    '''
 
-    model: Optional[KnowledgeBaseModel] = None
     models: dict[str, KnowledgeBaseModel] = {}
     builders: dict[str, Callable[[], KnowledgeBaseModel]] = {}
     
