@@ -1,5 +1,6 @@
 from typing import Callable
 from langchain.chat_models.base import BaseChatModel
+from langchain.embeddings.base import Embeddings
 from loguru import logger
 
 from simple_rag.chats.chat import ChatModel
@@ -10,12 +11,14 @@ from simple_rag.models.stub_model import StubModel
 
 class ModelCreator:
     _llm: BaseChatModel
+    _embeddings: Embeddings
     _models: dict[str, Callable[[BaseChatModel, dict], ChatModel]]
     _config: dict[str, str]
 
     # FIXME: config should be generalized or the whole approach to models should be changed
-    def __init__(self, llm: BaseChatModel, config: QnAServiceConfig):
+    def __init__(self, llm: BaseChatModel, embeddings: Embeddings, config: QnAServiceConfig):
         self._llm = llm
+        self._embeddings = embeddings
         self._config = config
 
         self._models = {
