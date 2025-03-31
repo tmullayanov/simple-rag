@@ -34,6 +34,7 @@ class AppContext:
         # FIXME: init llm here based on config
         self.llm = llm
         self.modelCreator = ModelCreator(llm=llm, config=self.settings.model_dump())
+        self.knowledge_base_mgr = KnowledgeBaseManager(llm=llm, embeddings=self.embeddings)
 
     async def on_shutdown(self):
         self.logger.debug("AppContext SHUTDOWN")

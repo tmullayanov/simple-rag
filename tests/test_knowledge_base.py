@@ -1,8 +1,9 @@
 from typing import Optional
+from unittest.mock import MagicMock
 import pytest
 
 from simple_rag.knowledge_base.base import KnowledgeBaseModel
-from simple_rag.knowledge_base.manager import KnowledgeBaseManager
+from simple_rag.knowledge_base.manager import KnowledgeBaseManager, NoSuchModelError
 
 class TestKnowledgeBaseModel(KnowledgeBaseModel):
     def query(self, query: str) -> Optional[str]:
@@ -12,7 +13,10 @@ class TestKnowledgeBaseModel(KnowledgeBaseModel):
 
 @pytest.fixture
 def knowledge_base_mgr():
-    yield KnowledgeBaseManager()
+    llm = MagicMock()
+    embeddings = MagicMock()
+
+    yield KnowledgeBaseManager(llm=llm, embeddings=embeddings)
 
 def test_create_kb(knowledge_base_mgr):
     pass
@@ -39,3 +43,7 @@ def test_can_register_multiple_models(knowledge_base_mgr):
     model_1 = knowledge_base_mgr.get_model('model_1')
     model_2 = knowledge_base_mgr.get_model('model_2')
     assert model_1 != model_2
+
+def test_cannot_create_unknown_model(knowledge_base_mgr):
+    with pytest.raises(NoSuchModelError):
+        model = knowledge_base_mgr.get_model('unknown_model')
