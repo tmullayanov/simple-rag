@@ -10,12 +10,13 @@ from simple_rag.models.stub_model import StubModel
 def model_creator():
     llm = MagicMock(),
     config = MagicMock()
-    creator = ModelCreator(llm, config)
+    embeddings = MagicMock()
+    creator = ModelCreator(llm, embeddings, config)
     yield creator
 
 
 def test_model_creation():
-    creator = ModelCreator(MagicMock(), MagicMock())
+    creator = ModelCreator(MagicMock(), MagicMock(), MagicMock())
 
 
 def test_create_model_by_name(model_creator):
@@ -29,10 +30,12 @@ def test_throws_when_model_not_found(model_creator):
     name = "does_not_exist"
 
     with pytest.raises(ValueError) as e_info:
-        model = model_creator.build(name)
+        model_creator.build(name)
 
 def test_models_returns_names():
-    creator = ModelCreator(MagicMock(), MagicMock())
+    creator = ModelCreator(
+        llm=MagicMock(), embeddings=MagicMock(), config=MagicMock()
+    )
 
     names = creator.models()
     assert len(names) > 0
