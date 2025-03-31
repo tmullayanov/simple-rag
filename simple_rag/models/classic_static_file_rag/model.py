@@ -15,7 +15,6 @@ from .state import RagState
 
 
 class ClassicRagModel(ChatModel):
-
     llm: BaseChatModel
     store: VectorStore
     prompt: PromptTemplate = default_rag_prompt
@@ -29,19 +28,23 @@ class ClassicRagModel(ChatModel):
         self._build_graph()
 
     def _retrieve(self, state: RagState):
-        retrieved_docs = self.store.similarity_search(state['question'])
+        retrieved_docs = self.store.similarity_search(state["question"])
 
-        return {'context': retrieved_docs}
+        return {"context": retrieved_docs}
 
     def _generate(self, state: RagState):
         docs_content = "\n\n".join(doc.page_content for doc in state["context"])
-        messages = self.prompt.invoke({"question": state["question"], "context": docs_content})
+        messages = self.prompt.invoke(
+            {"question": state["question"], "context": docs_content}
+        )
         response = self.llm.invoke(messages)
 
         return {"answer": response.content}
 
     def _build_graph(self):
-        graph_builder = StateGraph(RagState).add_sequence([self._retrieve, self._generate])
+        graph_builder = StateGraph(RagState).add_sequence(
+            [self._retrieve, self._generate]
+        )
         graph_builder.add_edge(START, "_retrieve")
         graph = graph_builder.compile()
 

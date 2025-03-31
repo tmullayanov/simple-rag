@@ -8,7 +8,7 @@ from simple_rag.models.stub_model import StubModel
 
 @pytest.fixture
 def model_creator():
-    llm = MagicMock(),
+    llm = MagicMock()
     config = MagicMock()
     embeddings = MagicMock()
     creator = ModelCreator(llm, embeddings, config)
@@ -32,14 +32,11 @@ def test_throws_when_model_not_found(model_creator):
     with pytest.raises(ValueError) as e_info:
         model_creator.build(name)
 
+
 def test_models_returns_names():
-    creator = ModelCreator(
-        llm=MagicMock(), embeddings=MagicMock(), config=MagicMock()
-    )
+    creator = ModelCreator(llm=MagicMock(), embeddings=MagicMock(), config=MagicMock())
 
     names = creator.models()
     assert len(names) > 0
-    assert 'stub_model' in names
-    assert 'rag_question_vector' in names
-
-    
+    assert "stub_model" in names
+    assert "rag_question_vector" in names

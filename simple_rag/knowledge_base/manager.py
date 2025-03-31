@@ -6,10 +6,11 @@ from loguru import logger
 
 from .base import KnowledgeBaseModel
 
-class KnowledgeBaseManager():
-    '''
+
+class KnowledgeBaseManager:
+    """
     Provides access to registered knowledge base models
-    '''
+    """
 
     _llm: BaseChatModel
     _embeddings: Embeddings
@@ -20,22 +21,23 @@ class KnowledgeBaseManager():
 
     models: dict[str, KnowledgeBaseModel] = {}
     builders: dict[str, Callable[[], KnowledgeBaseModel]] = {}
-    
+
     @staticmethod
     def register_model(key: str, model: Callable[[], KnowledgeBaseModel]):
-        logger.debug(f'Registering model by {key=}')
+        logger.debug(f"Registering model by {key=}")
         KnowledgeBaseManager.builders.update({key: model})
 
     def get_model(self, key: str):
         try:
             if key not in self.models:
-                logger.debug(f'Model {key=} not found, creating from builders...')
+                logger.debug(f"Model {key=} not found, creating from builders...")
                 self.models[key] = self.builders[key]()
-        
+
             return self.models[key]
         except KeyError as e:
-            logger.exception(f'Model {key=} not found')
-            raise NoSuchModelError(f'{key=}')
-        
+            logger.exception(f"Model {key=} not found")
+            raise NoSuchModelError(f"{key=}")
 
-class NoSuchModelError(Exception): pass
+
+class NoSuchModelError(Exception):
+    pass

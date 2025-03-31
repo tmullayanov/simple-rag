@@ -8,12 +8,12 @@ from .config import APP_SETTINGS
 
 app = FastAPI(
     lifespan=startup_and_shutdown,
-    )
+)
 
 
 app.include_router(rag_assistant_router, tags=["rag", "assistant"])
 app.include_router(summarizer_router, tags=["summarizer"])
-app.include_router(models_router, tags=['models'])
+app.include_router(models_router, tags=["models"])
 
 
 def run():

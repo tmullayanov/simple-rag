@@ -65,6 +65,8 @@ def get_question_store(config: QnAServiceConfig) -> QuestionVectorStore:
 
 
 # this function is used in ModelCreator and has to follow the signature
-def build_static_file_model(llm: BaseChatModel, config: QnAServiceConfig) -> QnaStaticFileQuestionVectoredModel:
+def build_static_file_model(
+    llm: BaseChatModel, config: QnAServiceConfig
+) -> QnaStaticFileQuestionVectoredModel:
     store = get_question_store(config)
     return QnaStaticFileQuestionVectoredModel(store=store, llm=llm)

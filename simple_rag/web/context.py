@@ -34,7 +34,9 @@ class AppContext:
         # FIXME: init llm here based on config
         self.llm = llm
         self.modelCreator = ModelCreator(llm=llm, config=self.settings.model_dump())
-        self.knowledge_base_mgr = KnowledgeBaseManager(llm=llm, embeddings=self.embeddings)
+        self.knowledge_base_mgr = KnowledgeBaseManager(
+            llm=llm, embeddings=self.embeddings
+        )
 
     async def on_shutdown(self):
         self.logger.debug("AppContext SHUTDOWN")
@@ -46,8 +48,10 @@ APP_CTX = AppContext(APP_SETTINGS)
 def get_chat_manager():
     return APP_CTX.chatManager
 
+
 def get_model_creator():
     return APP_CTX.modelCreator
+
 
 def get_default_llm():
     return APP_CTX.llm

@@ -21,6 +21,7 @@ def get_qna_service(cfg: QnAServiceConfig, llm):
 class ChatCreateRequest(BaseModel):
     model: str
 
+
 class ChatResponse(BaseModel):
     chat_id: UUID
 

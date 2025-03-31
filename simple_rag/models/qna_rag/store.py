@@ -26,23 +26,22 @@ class QuestionVectorStore:
             model_name="sentence-transformers/all-mpnet-base-v2"
         )
         return Chroma(
-            collection_name='qna_question_store',
+            collection_name="qna_question_store",
             embedding_function=embeddings,
-            persist_directory='./chroma_store'
+            persist_directory="./chroma_store",
         )
 
     def store_qna(self, qna: AbstractQnA):
         logger.debug(f"Storing qna entries...")
         self.qna = qna
         docs = self.__build_docs__()
-        
+
         if self.check_empty():
-            logger.debug('Empty store, populating...')
+            logger.debug("Empty store, populating...")
             self.doc_ids = self.vector_store.add_documents(docs)
         else:
             logger.debug("Store's not empty, skipping...")
         logger.debug("Storing done")
-        
 
     def __build_docs__(self):
         docs = [
@@ -51,11 +50,11 @@ class QuestionVectorStore:
         ]
 
         return docs
-    
+
     def check_empty(self):
         query = self.vector_store.get(include=[])
         logger.debug(f"Ids in store: {query['ids']}")
-        return len(query['ids']) == 0
+        return len(query["ids"]) == 0
 
     def similarity_search(self, question: str):
         return self.vector_store.similarity_search(question)

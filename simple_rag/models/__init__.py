@@ -16,15 +16,17 @@ class ModelCreator:
     _config: dict[str, str]
 
     # FIXME: config should be generalized or the whole approach to models should be changed
-    def __init__(self, llm: BaseChatModel, embeddings: Embeddings, config: QnAServiceConfig):
+    def __init__(
+        self, llm: BaseChatModel, embeddings: Embeddings, config: QnAServiceConfig
+    ):
         self._llm = llm
         self._embeddings = embeddings
         self._config = config
 
         self._models = {
-            'rag_question_vector': build_static_file_model,
-            'classic_rag': build_classic_rag_model,
-            'stub_model': lambda *args: StubModel()
+            "rag_question_vector": build_static_file_model,
+            "classic_rag": build_classic_rag_model,
+            "stub_model": lambda *args: StubModel(),
         }
 
     def build(self, name: str) -> ChatModel:
