@@ -29,6 +29,7 @@ class QuestionVectorStore:
             collection_name="qna_question_store",
             embedding_function=embeddings,
             persist_directory="./chroma_store",
+            collection_metadata={"hnsw:space": "cosine"},
         )
 
     def store_qna(self, qna: AbstractQnA):

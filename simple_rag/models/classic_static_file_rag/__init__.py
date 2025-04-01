@@ -2,7 +2,8 @@ from typing import Optional
 
 from langchain.chat_models.base import BaseChatModel
 from langchain.embeddings.base import Embeddings
-from langchain_core.vectorstores import VectorStore, InMemoryVectorStore
+from langchain_chroma import Chroma
+from langchain_core.vectorstores import VectorStore
 
 from loguru import logger
 
@@ -20,12 +21,20 @@ def get_store(filename: str) -> VectorStore:
 
     if _store is None:
         logger.debug("Populating VectorStore for classic rag.")
-        _store = InMemoryVectorStore(embeddings)
+        _store = make_store(embeddings)
         docs = parse_csv(filename)
         _store.add_documents(docs)
         logger.debug("VectorStore populated successfully.")
 
     return _store
+
+def make_store(embeddings: Embeddings) -> VectorStore:
+    return Chroma(
+            collection_name="classis_rag",
+            embedding_function=embeddings,
+            persist_directory="./chroma_store",
+            collection_metadata={"hnsw:space": "cosine"},
+        )
 
 
 def build_classic_rag_model(llm: BaseChatModel, config: dict[str, str]):
