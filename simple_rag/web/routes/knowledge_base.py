@@ -34,3 +34,15 @@ def ask_question(
             f"Got exception while using knowledge base (model={request.model}, details={e})"
         )
         return HTTPException(status_code=500, detail=str(e))
+
+@router.get('/models/')
+def available_models(
+    knowledge_base_manager: KnowledgeBaseManager = Depends(get_knowledge_base_manager),
+):
+    try:
+        logger.info(f"Got request to knowledge base available models")
+
+        return JSONResponse(content={"models": knowledge_base_manager.available_models()})
+    except Exception as e:
+        logger.exception(f'Got exception while retrieving available models: {e}')
+        return HTTPException(status_code=500, detail="Internal server error")
