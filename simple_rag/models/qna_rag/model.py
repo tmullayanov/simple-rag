@@ -3,6 +3,7 @@ from typing import Optional
 import uuid
 from langgraph.graph.state import CompiledStateGraph
 from langchain.chat_models.base import BaseChatModel
+from langchain.embeddings.base import Embeddings
 
 from simple_rag.chats.chat import ChatModel
 from simple_rag.models.qna_rag.parser.csv_parser import QnAFileParser
@@ -55,18 +56,18 @@ class QnaStaticFileQuestionVectoredModel(ChatModel):
 _store: Optional[QuestionVectorStore] = None
 
 
-def get_question_store(config: QnAServiceConfig) -> QuestionVectorStore:
+def get_question_store(embeddings: Embeddings, config: QnAServiceConfig) -> QuestionVectorStore:
     global _store
     if _store is None:
         parser = QnAFileParser(**config)
         qna = parser.parse_qna()
-        _store = QuestionVectorStore(qna)
+        _store = QuestionVectorStore(embeddings, qna)
     return _store
 
 
 # this function is used in ModelCreator and has to follow the signature
 def build_static_file_model(
-    llm: BaseChatModel, config: QnAServiceConfig
+    llm: BaseChatModel, embeddings: Embeddings, config: QnAServiceConfig
 ) -> QnaStaticFileQuestionVectoredModel:
-    store = get_question_store(config)
+    store = get_question_store(embeddings, config)
     return QnaStaticFileQuestionVectoredModel(store=store, llm=llm)

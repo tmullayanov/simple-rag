@@ -1,6 +1,7 @@
 from typing import Optional
 
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.embeddings.base import Embeddings
 from langchain.docstore.document import Document
 
 from langchain_chroma import Chroma
@@ -14,17 +15,14 @@ class QuestionVectorStore:
     doc_ids: list[str]
     qna: AbstractQnA
 
-    def __init__(self, qna: Optional[AbstractQnA] = None):
-        self.vector_store = QuestionVectorStore.make_vector_store()
+    def __init__(self, embeddings: Embeddings, qna: Optional[AbstractQnA] = None):
+        self.vector_store = QuestionVectorStore.make_vector_store(embeddings)
 
         if qna:
             self.store_qna(qna)
 
     @classmethod
-    def make_vector_store(cls):
-        embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-mpnet-base-v2"
-        )
+    def make_vector_store(cls, embeddings: Embeddings):
         return Chroma(
             collection_name="qna_question_store",
             embedding_function=embeddings,

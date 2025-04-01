@@ -36,7 +36,7 @@ class ModelCreator:
             builder = self._models[name]
             logger.debug(f"Found builder. Initializing model")
 
-            return builder(self._llm, self._config)
+            return builder(self._llm, self._embeddings, self._config)
         except KeyError:
             raise ValueError(f"Unknown model name: {name}")
 

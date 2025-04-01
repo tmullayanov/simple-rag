@@ -11,12 +11,11 @@ from simple_rag.models.classic_static_file_rag.kb_model import ClassicRagKnowled
 
 from .csv_parser import parse_csv
 from .chat_model import ClassicRagModel
-from .store import embeddings
 
 _store: Optional[VectorStore] = None
 
 
-def get_store(filename: str) -> VectorStore:
+def get_store(embeddings: Embeddings, filename: str) -> VectorStore:
     global _store
 
     if _store is None:
@@ -37,12 +36,12 @@ def make_store(embeddings: Embeddings) -> VectorStore:
         )
 
 
-def build_classic_rag_model(llm: BaseChatModel, config: dict[str, str]):
+def build_classic_rag_model(llm: BaseChatModel, embeddings: Embeddings, config: dict[str, str]):
     # FIXME: use different key from config
-    store = get_store(config["qna_path"])
+    store = get_store(embeddings, config["qna_path"])
     return ClassicRagModel(llm=llm, store=store)
 
 
-def build_classic_rag_knowledgebase_model(llm: BaseChatModel, _embeddings: Embeddings, config: dict[str, str]):
-    store = get_store(config["qna_path"])
+def build_classic_rag_knowledgebase_model(llm: BaseChatModel, embeddings: Embeddings, config: dict[str, str]):
+    store = get_store(embeddings, config["qna_path"])
     return ClassicRagKnowledgeBase(llm=llm, store=store)
