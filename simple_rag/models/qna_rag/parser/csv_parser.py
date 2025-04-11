@@ -23,7 +23,7 @@ class QnAFileParser:
         """Загружает данные из CSV файла."""
         self.qna_df = pd.read_csv(self.qna_path, delimiter=self.delimiter)
 
-    def parse_qna(self) -> AbstractQnA:
+    def parse_qna(self) -> SimpleQna:
         """Создает словарь соответствий вопрос-ответы из DataFrame."""
         if self.qna_df is None:
             self.load_data()
