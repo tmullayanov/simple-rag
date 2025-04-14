@@ -22,6 +22,9 @@ def default_doc_transform(row: dict) -> Document:
 
 
 class DBEngine:
+    class StoreDFError(Exception): pass
+    class RollbackDBError(Exception): pass
+
     db_link: str = None
     table_name: str = None
 
@@ -30,21 +33,43 @@ class DBEngine:
         self.table_name = db_cfg.get("tbl_name", None)
 
     def store_dataframe(self, df: pd.DataFrame, *args, **kwargs):
-        if not self.db_link or not self.table_name:
-            logger.warn("DB engine not configured, skip store_dataframe")
-            return
-        
-        engine = create_engine(self.db_link)
-        with engine.connect() as connection:
+        try:
+            if not self.db_link or not self.table_name:
+                logger.warn("DB engine not configured, skip store_dataframe")
+                return
+            
+            engine = create_engine(self.db_link)
+            with engine.connect() as connection:
 
-            if not engine.dialect.has_table(connection, self.table_name):
-                logger.debug('creating table', table_name=self.table_name)
-                df.to_sql(self.table_name, con=engine, index=False, if_exists='replace')
-            else:
-                logger.debug('adding to table')
-                df.to_sql(self.table_name, con=engine, index=False, if_exists='append')
-        
-        logger.info('store_dataframe DONE')
+                if not engine.dialect.has_table(connection, self.table_name):
+                    logger.debug('creating table', table_name=self.table_name)
+                    df.to_sql(self.table_name, con=engine, index=False, if_exists='replace')
+                else:
+                    logger.debug('adding to table')
+                    df.to_sql(self.table_name, con=engine, index=False, if_exists='append')
+            
+            logger.info('store_dataframe DONE')
+        except Exception as ex:
+            logger.error("ERR_STORE_DATAFRAME", error=ex)
+            raise DBEngine.StoreDFError(ex)
+    
+    def clear_table(self):
+        try:
+            db_url = self.engine.db_link
+            table_name = self.engine.table_name
+            engine = create_engine(db_url)
+            metadata = MetaData()
+            with engine.connect() as connection:
+                # Удаляем только что добавленные строки из таблицы
+                table = Table(table_name, metadata, autoload_with=engine)
+                delete_stmt = table.delete()
+                connection.execute(delete_stmt)
+                connection.commit()
+                logger.debug("Rolled back DB changes due to vectorization failure")
+        except Exception as rollback_error:
+            logger.error(f"Failed to roll back DB changes: {rollback_error}")
+            raise DBEngine.RollbackDBError(rollback_error)
+            
 
 class Store:
     _is_empty = True
@@ -96,7 +121,7 @@ class Store:
             self.vectorStore.add_documents(docs)
             logger.debug('docs added to vectorStore')
 
-        except SQLAlchemyError as db_error:
+        except DBEngine.StoreDFError as db_error:
             # FIXME: Replace with DBEngine dedicated exception
             logger.error(f"Failed to save DataFrame to relational DB: {db_error}")
             raise db_error
@@ -104,23 +129,12 @@ class Store:
         except Exception as vectorization_error:
             # If vectorization fails, attempt to roll back DB changes
             logger.error(f"Vectorization failed: {vectorization_error}. Rolling back DB changes.")
-            
             try:
-                db_url = self.engine.db_link
-                table_name = self.engine.table_name
-                engine = create_engine(db_url)
-                metadata = MetaData()
-                with engine.connect() as connection:
-                    # Удаляем только что добавленные строки из таблицы
-                    table = Table(table_name, metadata, autoload_with=engine)
-                    delete_stmt = table.delete()
-                    connection.execute(delete_stmt)
-                    connection.commit()
-                    logger.debug("Rolled back DB changes due to vectorization failure")
-            except Exception as rollback_error:
-                logger.error(f"Failed to roll back DB changes: {rollback_error}")
+                self.engine.clear_table()
+                logger.info("Rolled back DB changes due to vectorization failure")
+            except DBEngine.RollbackDBError as rollback_error:
+                logger.error("Failed to roll back DB changes: {rollback_error}")
             
-            raise vectorization_error
 
     def get(self, column_name, value) -> list[dict]:
         if self.df is None:
@@ -131,5 +145,5 @@ class Store:
             .tolist()
         )
 
-    def similarity_search(self, query, config: dict = {}):
+    def similarity_search(self, query, config: dict = {}) -> list[Document]:
         return self.vectorStore.similarity_search(query, **config)
