@@ -15,7 +15,7 @@ class QuestionRequest(BaseModel):
     model: str
 
 class MessageResponse(BaseModel):
-    response: str
+    response: list[str]
 
 @router.post('/')
 def ask_question(
