@@ -3,12 +3,11 @@ import pytest
 from langchain_chroma import Chroma
 import pandas as pd
 import tempfile
-from structlog import get_logger
-from sqlalchemy import create_engine
+from loguru import logger
+from sqlalchemy import MetaData, create_engine
 
 from simple_rag.knowledge_base.store.default_store import Store
 
-logger = get_logger()
 
 
 @pytest.fixture(scope="session")
@@ -82,9 +81,11 @@ def sample_dataframe():
     """
     Фикстура для создания тестового DataFrame.
     """
-    return pd.DataFrame(
-        {"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "age": [25, 30, 35]}
-    )
+    return pd.DataFrame({
+            "Question": ["q1", "q2", "q3"], 
+            "Description": ["d1", "d2", "d3"], 
+            "Solution": ["s1", "s2", "s3"]
+        })
 
 
 def test_save_dataframe_to_tempfile_db(sample_dataframe):
@@ -93,7 +94,7 @@ def test_save_dataframe_to_tempfile_db(sample_dataframe):
     """
     _, db_fname = tempfile.mkstemp()
     db_link = f"sqlite:///{db_fname}"
-    tbl_name = "df_table"
+    tbl_name = "sample_kbase"
 
     # Create store and save dataframe
     store = Store(
@@ -106,14 +107,21 @@ def test_save_dataframe_to_tempfile_db(sample_dataframe):
 
     # Connect to DB and check that the data is written correctly
     engine = create_engine(db_link)
+    metadata = MetaData()
+    metadata.reflect(engine)
+
     df = pd.read_sql_table(tbl_name, engine)
+    df.drop(labels=['id', 'version'], axis=1, inplace=True)
+    df.columns = df.columns.str.lower()
+    sample_dataframe.columns = sample_dataframe.columns.str.lower()
+    assert(set(['question', 'description', 'solution']).issubset(df.columns))
     pd.testing.assert_frame_equal(df, sample_dataframe)
 
 
 def test_store_loads_df_from_db(sample_dataframe):
     _, db_fname = tempfile.mkstemp()
     db_link = f"sqlite:///{db_fname}"
-    tbl_name = "df_table"
+    tbl_name = "sample_kbase"
 
     # Create store and save dataframe
     save_store = Store(
@@ -131,5 +139,7 @@ def test_store_loads_df_from_db(sample_dataframe):
             "model_name": tbl_name,
         }
     )
-    val = load_store.get('name', 'Alice')
-    assert val == sample_dataframe[sample_dataframe['name'] == 'Alice'].to_dict(orient='records')
+    val = load_store.get('Question', 'q1')
+
+    assert val == sample_dataframe[sample_dataframe['Question'] == 'q1'].to_dict(orient='records')
+    pd.testing.assert_frame_equal(sample_dataframe, load_store.df)
