@@ -6,7 +6,7 @@ import tempfile
 from structlog import get_logger
 from sqlalchemy import create_engine
 
-from simple_rag.knowledge_base.default_store import Store
+from simple_rag.knowledge_base.store.default_store import Store
 
 logger = get_logger()
 
@@ -99,7 +99,7 @@ def test_save_dataframe_to_tempfile_db(sample_dataframe):
     store = Store(
         db_cfg={
             "db_link": db_link,
-            "tbl_name": tbl_name,
+            "model_name": tbl_name,
         }
     )
     store.store_dataframe(sample_dataframe)
@@ -108,3 +108,28 @@ def test_save_dataframe_to_tempfile_db(sample_dataframe):
     engine = create_engine(db_link)
     df = pd.read_sql_table(tbl_name, engine)
     pd.testing.assert_frame_equal(df, sample_dataframe)
+
+
+def test_store_loads_df_from_db(sample_dataframe):
+    _, db_fname = tempfile.mkstemp()
+    db_link = f"sqlite:///{db_fname}"
+    tbl_name = "df_table"
+
+    # Create store and save dataframe
+    save_store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        }
+    )
+    save_store.store_dataframe(sample_dataframe)
+
+    # Create another store and load dataframe
+    load_store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        }
+    )
+    val = load_store.get('name', 'Alice')
+    assert val == sample_dataframe[sample_dataframe['name'] == 'Alice'].to_dict(orient='records')

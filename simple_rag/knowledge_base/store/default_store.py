@@ -1,17 +1,15 @@
 from langchain.vectorstores.base import VectorStore
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
-from typing import Callable
+from typing import Callable, Optional
 from langchain_chroma import Chroma
+from loguru import logger
 import pandas as pd
-from sqlalchemy import MetaData, create_engine, Table
-from sqlalchemy.exc import SQLAlchemyError
-from structlog import get_logger
+
 
 from simple_rag.embeddings import embeddings
+from .db_engine import DBEngine
 
-
-logger = get_logger()
 
 
 def default_doc_transform(row: dict) -> Document:
@@ -19,57 +17,6 @@ def default_doc_transform(row: dict) -> Document:
         page_content="\n".join(f"{col}: {val}" for (col, val) in row.items())
     )
 
-
-
-class DBEngine:
-    class StoreDFError(Exception): pass
-    class RollbackDBError(Exception): pass
-
-    db_link: str = None
-    table_name: str = None
-
-    def __init__(self, db_cfg: dict = {}):
-        self.db_link = db_cfg.get("db_link", None)
-        self.table_name = db_cfg.get("tbl_name", None)
-
-    def store_dataframe(self, df: pd.DataFrame, *args, **kwargs):
-        try:
-            if not self.db_link or not self.table_name:
-                logger.warn("DB engine not configured, skip store_dataframe")
-                return
-            
-            engine = create_engine(self.db_link)
-            with engine.connect() as connection:
-
-                if not engine.dialect.has_table(connection, self.table_name):
-                    logger.debug('creating table', table_name=self.table_name)
-                    df.to_sql(self.table_name, con=engine, index=False, if_exists='replace')
-                else:
-                    logger.debug('adding to table')
-                    df.to_sql(self.table_name, con=engine, index=False, if_exists='append')
-            
-            logger.info('store_dataframe DONE')
-        except Exception as ex:
-            logger.error("ERR_STORE_DATAFRAME", error=ex)
-            raise DBEngine.StoreDFError(ex)
-    
-    def clear_table(self):
-        try:
-            db_url = self.engine.db_link
-            table_name = self.engine.table_name
-            engine = create_engine(db_url)
-            metadata = MetaData()
-            with engine.connect() as connection:
-                # Удаляем только что добавленные строки из таблицы
-                table = Table(table_name, metadata, autoload_with=engine)
-                delete_stmt = table.delete()
-                connection.execute(delete_stmt)
-                connection.commit()
-                logger.debug("Rolled back DB changes due to vectorization failure")
-        except Exception as rollback_error:
-            logger.error(f"Failed to roll back DB changes: {rollback_error}")
-            raise DBEngine.RollbackDBError(rollback_error)
-            
 
 class Store:
     _is_empty = True
@@ -80,6 +27,8 @@ class Store:
     def __init__(self, db_cfg: dict = {}, vectorstore_cfg: dict = {}, *args, **kwargs):
         self.engine = Store.build_db_manager(db_cfg)
         self.vectorStore = Store.build_vector_store(vectorstore_cfg)
+
+        self.df = self.engine.load_dataframe()
 
     @staticmethod
     def build_vector_store(cfg: dict):
