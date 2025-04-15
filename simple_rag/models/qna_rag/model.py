@@ -56,7 +56,9 @@ class QnaStaticFileQuestionVectoredModel(ChatModel):
 _store: Optional[QuestionVectorStore] = None
 
 
-def get_question_store(embeddings: Embeddings, config: QnAServiceConfig) -> QuestionVectorStore:
+def get_question_store(
+    embeddings: Embeddings, config: QnAServiceConfig
+) -> QuestionVectorStore:
     global _store
     if _store is None:
         parser = QnAFileParser(**config)

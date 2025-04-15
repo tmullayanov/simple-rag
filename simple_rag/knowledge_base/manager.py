@@ -34,13 +34,15 @@ class KnowledgeBaseManager:
     def available_models(self) -> list[str]:
         built_models = set(self.models.keys())
         models_from_builders = set(self.builders.keys())
-        
+
         all_models = built_models.union(models_from_builders)
 
         return list(all_models)
 
     @staticmethod
-    def register_model(key: str, model: Callable[[], KnowledgeBaseModel]):
+    def register_model(
+        key: str, model: Callable[[BaseChatModel, Embeddings, dict], KnowledgeBaseModel]
+    ):
         logger.debug(f"Registering model by {key=}")
         KnowledgeBaseManager.builders.update({key: model})
 

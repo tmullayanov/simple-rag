@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from simple_rag import embeddings
 from simple_rag.chats import ChatManager
 from simple_rag.models import ModelCreator
 from simple_rag.models.qna_rag.model import QnAServiceConfig, build_static_file_model
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/chat")
 
 
 def get_qna_service(cfg: QnAServiceConfig, llm):
-    return build_static_file_model(cfg, llm)
+    return build_static_file_model(llm=llm, config=cfg, embeddings=embeddings)
 
 
 # Модели данных для API

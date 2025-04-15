@@ -4,21 +4,21 @@ import abc
 
 class AbstractQnA(abc.ABC):
     @abc.abstractmethod
-    def get_questions() -> Iterator[str]:
+    def get_questions(self) -> Iterator[str]:
         """
         Get questions as an iterator of strings
         """
         pass
 
     @abc.abstractmethod
-    def get_questions_with_answers() -> Iterator[tuple[str, list[str]]]:
+    def get_questions_with_answers(self) -> Iterator[tuple[str, list[str]]]:
         """
         Get questions with answers as an iterator of tuples(question, answers).
         """
         pass
 
     @abc.abstractmethod
-    def lookup_answer(question: str) -> Optional[list[str]]:
+    def lookup_answer(self, question: str) -> Optional[list[str]]:
         """
         Get answers for a question from our Q&A database as a list of strings.
         If there is no such question, return None.
@@ -39,7 +39,7 @@ class SimpleQna(AbstractQnA):
         self.db = db
 
     def get_questions(self) -> Iterator[str]:
-        return self.db.keys()
+        return list(self.db.keys())
 
     def get_questions_with_answers(self) -> Iterator[tuple[str, list[str]]]:
         return self.db.items()

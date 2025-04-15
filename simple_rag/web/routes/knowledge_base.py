@@ -14,10 +14,12 @@ class QuestionRequest(BaseModel):
     question: str
     model: str
 
+
 class MessageResponse(BaseModel):
     response: list[str]
 
-@router.post('/')
+
+@router.post("/")
 def ask_question(
     request: QuestionRequest,
     knowledge_base_manager: KnowledgeBaseManager = Depends(get_knowledge_base_manager),
@@ -35,14 +37,17 @@ def ask_question(
         )
         return HTTPException(status_code=500, detail=str(e))
 
-@router.get('/models/')
+
+@router.get("/models/")
 def available_models(
     knowledge_base_manager: KnowledgeBaseManager = Depends(get_knowledge_base_manager),
 ):
     try:
         logger.info(f"Got request to knowledge base available models")
 
-        return JSONResponse(content={"models": knowledge_base_manager.available_models()})
+        return JSONResponse(
+            content={"models": knowledge_base_manager.available_models()}
+        )
     except Exception as e:
-        logger.exception(f'Got exception while retrieving available models: {e}')
+        logger.exception(f"Got exception while retrieving available models: {e}")
         return HTTPException(status_code=500, detail="Internal server error")

@@ -1,4 +1,3 @@
-
 from simple_rag.knowledge_base.base import KnowledgeBaseModel
 
 

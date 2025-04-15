@@ -27,21 +27,26 @@ def get_store(embeddings: Embeddings, filename: str) -> VectorStore:
 
     return _store
 
+
 def make_store(embeddings: Embeddings) -> VectorStore:
     return Chroma(
-            collection_name="classis_rag",
-            embedding_function=embeddings,
-            persist_directory="./chroma_store",
-            collection_metadata={"hnsw:space": "cosine"},
-        )
+        collection_name="classis_rag",
+        embedding_function=embeddings,
+        persist_directory="./chroma_store",
+        collection_metadata={"hnsw:space": "cosine"},
+    )
 
 
-def build_classic_rag_model(llm: BaseChatModel, embeddings: Embeddings, config: dict[str, str]):
+def build_classic_rag_model(
+    llm: BaseChatModel, embeddings: Embeddings, config: dict[str, str]
+):
     # FIXME: use different key from config
     store = get_store(embeddings, config["qna_path"])
     return ClassicRagModel(llm=llm, store=store)
 
 
-def build_classic_rag_knowledgebase_model(llm: BaseChatModel, embeddings: Embeddings, config: dict[str, str]):
+def build_classic_rag_knowledgebase_model(
+    llm: BaseChatModel, embeddings: Embeddings, config: dict[str, str]
+):
     store = get_store(embeddings, config["qna_path"])
     return ClassicRagKnowledgeBase(llm=llm, store=store)

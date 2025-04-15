@@ -12,7 +12,7 @@ from simple_rag.models.stub_model import StubModel
 class ModelCreator:
     _llm: BaseChatModel
     _embeddings: Embeddings
-    _models: dict[str, Callable[[BaseChatModel, dict], ChatModel]]
+    _models: dict[str, Callable[[BaseChatModel, Embeddings, dict], ChatModel]]
     _config: dict[str, str]
 
     # FIXME: config should be generalized or the whole approach to models should be changed
