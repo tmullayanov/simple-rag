@@ -1,17 +1,17 @@
-from typing import Optional, Iterator
+from typing import Iterable, Optional
 import abc
 
 
 class AbstractQnA(abc.ABC):
     @abc.abstractmethod
-    def get_questions(self) -> Iterator[str]:
+    def get_questions(self) -> Iterable[str]:
         """
         Get questions as an iterator of strings
         """
         pass
 
     @abc.abstractmethod
-    def get_questions_with_answers(self) -> Iterator[tuple[str, list[str]]]:
+    def get_questions_with_answers(self) -> Iterable[tuple[str, list[str]]]:
         """
         Get questions with answers as an iterator of tuples(question, answers).
         """
@@ -38,10 +38,10 @@ class SimpleQna(AbstractQnA):
     def __init__(self, db: dict[str, list[str]]):
         self.db = db
 
-    def get_questions(self) -> Iterator[str]:
+    def get_questions(self) -> Iterable[str]:
         return list(self.db.keys())
 
-    def get_questions_with_answers(self) -> Iterator[tuple[str, list[str]]]:
+    def get_questions_with_answers(self) -> Iterable[tuple[str, list[str]]]:
         return self.db.items()
 
     def lookup_answer(self, question: str) -> Optional[list[str]]:
