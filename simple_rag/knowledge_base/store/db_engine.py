@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from loguru import logger
 import pandas as pd
 from sqlalchemy import Engine, create_engine
@@ -25,16 +25,20 @@ class PseudoDBEngine():
     def load_dataframe(self) -> Optional[pd.DataFrame]:
         return self._df
 
-    def store_dataframe(self, df: pd.DataFrame) -> int:
+    def store_dataframe(self, df: pd.DataFrame) -> Tuple[int, list[int]]:
         self._df = df
         self.version += 1
-        return self.version
+        return self.version, list(range(self._df.shape[0]))
+    
+    def rollback_version(self, version: int):
+        self.version -= 1
         
 
 class DBEngine:
     db_link: str = None
     model_name: str = None
     engine: Engine = None
+    version: int = 0
 
     def __init__(self, db_cfg: dict = {}):
         self.db_link = db_cfg["db_link"]
@@ -65,19 +69,22 @@ class DBEngine:
             max_version = session.query(func.max(SampleKBase.version)).scalar() or 0
         except OperationalError:
             max_version = 0
+        
+        logger.debug(f"max_version: {max_version}")
+        self.version = max_version
 
         data = (
             session.query(SampleKBase).filter(SampleKBase.version == max_version).all()
         )
 
         df = pd.DataFrame(
-            [(row.question, row.description, row.solution) for row in data],
-            columns=["Question", "Description", "Solution"],
+            [(row.id, row.question, row.description, row.solution) for row in data],
+            columns=["_id", "Question", "Description", "Solution"],
         )
 
         return df
 
-    def store_dataframe(self, df: pd.DataFrame) -> int:
+    def store_dataframe(self, df: pd.DataFrame) -> Tuple[int, list[int]]:
         """
         Store the DataFrame in the relational database and return the new version number.
         If something goes wrong, raise an exception.
@@ -107,6 +114,9 @@ class DBEngine:
             # Find the latest version and increment it
             max_version = session.query(func.max(SampleKBase.version)).scalar() or 0
             new_version = max_version + 1
+            self.version = new_version
+
+            new_ids = []
 
             for _, row in df.iterrows():
                 new_row = SampleKBase(
@@ -116,10 +126,13 @@ class DBEngine:
                     version=new_version,
                 )
                 session.add(new_row)
+                session.flush()
+                new_ids.append(new_row.id)
 
             session.commit()
-            logger.debug(f"DataFrame saved to relational DB with version {new_version}")
-            return new_version
+            logger.debug(f"DataFrame saved to DB with version {new_version}")
+            
+            return new_version, new_ids
 
         except Exception as e:
             logger.error(f"Failed to save DataFrame to relational DB: {e}")

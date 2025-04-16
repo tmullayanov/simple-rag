@@ -157,10 +157,12 @@ def test_store_keeps_only_latest_version(sample_dataframe):
     tbl_name = "sample_kbase"
 
     # Create store and save dataframe
-    store = Store(db_cfg={
-        "db_link": db_link,
-        "model_name": tbl_name,
-    })
+    store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        }
+    )
 
     store.store_dataframe(sample_dataframe)
     lower_val = store.get("Question", "q1")
@@ -178,27 +180,31 @@ def test_store_keeps_only_latest_version(sample_dataframe):
     logger.info(lower_val)
     assert len(lower_val) == 0
 
-    
+
 def test_store_keeps_latest_version_after_restart(sample_dataframe):
     _, db_fname = tempfile.mkstemp()
     db_link = f"sqlite:///{db_fname}"
     tbl_name = "sample_kbase"
 
     # Create store and save dataframe
-    store = Store(db_cfg={
-        "db_link": db_link,
-        "model_name": tbl_name,
-    })
+    store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        }
+    )
 
     store.store_dataframe(sample_dataframe)
-    
+
     df = sample_dataframe.apply(lambda x: x.str.upper() if x.dtype == "object" else x)
     store.store_dataframe(df)
-    
-    store_2 = Store(db_cfg={
-        "db_link": db_link,
-        "model_name": tbl_name,
-    })
+
+    store_2 = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        }
+    )
 
     upper_val = store_2.get("Question", "Q1")
     logger.info(upper_val)
@@ -208,25 +214,28 @@ def test_store_keeps_latest_version_after_restart(sample_dataframe):
     logger.info(lower_val)
     assert len(lower_val) == 0
 
+
 def test_store_rolls_back_on_vectorization_error(sample_dataframe):
     _, db_fname = tempfile.mkstemp()
     db_link = f"sqlite:///{db_fname}"
     tbl_name = "sample_kbase"
 
     # Create store and save dataframe
-    store = Store(db_cfg={
-        "db_link": db_link,
-        "model_name": tbl_name,
-    })
+    store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        }
+    )
 
     assert store.is_empty
 
     # break vectorizer on purpose in a white-box manner
-    store.vectorStore = 10 # ugly but this will cause exception on every attr call.
+    store.vectorStore = 10  # ugly but this will cause exception on every attr call.
 
     with pytest.raises(Exception):
         store.store_dataframe(sample_dataframe)
-        
+
     assert store.is_empty
 
     engine = create_engine(db_link)
@@ -235,3 +244,62 @@ def test_store_rolls_back_on_vectorization_error(sample_dataframe):
 
     df = pd.read_sql_table(tbl_name, engine)
     assert df.empty
+
+
+def test_similar_search_returns_original_kbase_row(df):
+    _, db_fname = tempfile.mkstemp()
+    db_link = f"sqlite:///{db_fname}"
+    tbl_name = "sample_kbase"
+
+    # Create store and save dataframe
+    store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        },
+        vectorstore_cfg={
+            "type": "chroma",
+            "collection_name": "support_knowledge_base",
+            "persist_directory": tempfile.mkdtemp(),
+        },
+    )
+
+    store.store_dataframe(df)
+    matches = store.get_entries_similar_to_problem(
+        problem="what is the proper way to connect to VM?"
+    )
+    logger.info("matches {matches}", matches=matches)
+
+    assert len(matches) > 0
+
+    # checks below are tightly coupled with sample dataframe contents
+    assert(all(
+        'Question' in entry for entry in matches
+    ))
+    assert(any(
+        'connect to my VM' in entry['Question'] for entry in matches
+    ))
+
+
+@pytest.mark.skip(reason="postponed")
+def test_db_keeps_only_latest_version(sample_dataframe):
+    _, db_fname = tempfile.mkstemp()
+    db_link = f"sqlite:///{db_fname}"
+    tbl_name = "sample_kbase"
+
+    # Create store and save dataframe
+    store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        }
+    )
+
+    store.store_dataframe(sample_dataframe)
+
+    df = sample_dataframe.apply(lambda x: x.str.upper() if x.dtype == "object" else x)
+    store.store_dataframe(df)
+
+    engine = create_engine(db_link)
+
+    # check that version is unique in db.

@@ -1,7 +1,7 @@
 from langchain.vectorstores.base import VectorStore
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
-from typing import Callable, Optional
+from typing import Callable
 from langchain_chroma import Chroma
 from loguru import logger
 import pandas as pd
@@ -56,7 +56,7 @@ class Store:
     def store_dataframe(
         self,
         df,
-        doc_transform: Callable[[pd.Series], Document] = default_doc_transform,
+        doc_transform: Callable[[dict], Document] = default_doc_transform,
     ):
         if not self.engine or not self.vectorStore:
             logger.warning(
@@ -66,11 +66,24 @@ class Store:
 
         try:
             # Шаг 1: Сохраняем DataFrame в БД
-            new_version = self.engine.store_dataframe(df)
-            logger.debug("DataFrame saved to relational DB")
+            new_version, new_ids = self.engine.store_dataframe(df)
+            logger.debug("DataFrame saved to DB")
+            df['_id'] = new_ids
 
             # Шаг 2: Векторизация данных
-            docs = df.apply(lambda x: doc_transform(x.to_dict()), axis=1).tolist()
+            docs = []
+            for i, (_, row) in enumerate(df.iterrows()):
+                # Преобразуем строку в документ
+                doc = doc_transform(row.to_dict())
+                
+                # Добавляем метаданные: версия и ID из БД
+                if not hasattr(doc, "metadata"):
+                    doc.metadata = {}
+                doc.metadata["_version"] = new_version
+                doc.metadata["_db_id"] = new_ids[i]  # Используем ID из БД
+
+                docs.append(doc)
+
             logger.debug("docs created", docs_len=len(docs))
 
             self.vectorStore.add_documents(docs)
@@ -107,3 +120,19 @@ class Store:
 
     def similarity_search(self, query, config: dict = {}) -> list[Document]:
         return self.vectorStore.similarity_search(query, **config)
+    
+    def get_entries_similar_to_problem(self, problem: str, search_config: dict = {}, *arg, **kwargs) -> list[dict]:
+        docs = self.vectorStore.similarity_search_with_relevance_scores(
+            problem,
+            **search_config,
+            filter={"_version": self.engine.version},
+        )
+        logger.debug("docs retrieved {docs_len}", docs_len=len(docs))
+        
+        doc_ids = (doc.metadata["_db_id"] for (doc, _) in docs)
+        records = self.df[self.df['_id'].isin(doc_ids)].to_dict(orient='records')
+
+        return records
+
+
+
