@@ -58,8 +58,6 @@ class Store:
         df,
         doc_transform: Callable[[pd.Series], Document] = default_doc_transform,
     ):
-        self.df = df
-
         if not self.engine or not self.vectorStore:
             logger.warning(
                 "DB engine or VectorStore not configured, skip store_dataframe"
@@ -77,6 +75,9 @@ class Store:
 
             self.vectorStore.add_documents(docs)
             logger.debug("docs added to vectorStore")
+
+            # Шаг 3: Обновляем DataFrame в памяти
+            self.df = df
         
         except StoreDFError as store_df_error:
             logger.error(f"Failed to store DataFrame: {store_df_error}")

@@ -149,3 +149,89 @@ def test_store_loads_df_from_db(sample_dataframe):
         orient="records"
     )
     pd.testing.assert_frame_equal(sample_dataframe, load_store.df)
+
+
+def test_store_keeps_only_latest_version(sample_dataframe):
+    _, db_fname = tempfile.mkstemp()
+    db_link = f"sqlite:///{db_fname}"
+    tbl_name = "sample_kbase"
+
+    # Create store and save dataframe
+    store = Store(db_cfg={
+        "db_link": db_link,
+        "model_name": tbl_name,
+    })
+
+    store.store_dataframe(sample_dataframe)
+    lower_val = store.get("Question", "q1")
+    logger.info(lower_val)
+    assert len(lower_val) == 1
+
+    df = sample_dataframe.apply(lambda x: x.str.upper() if x.dtype == "object" else x)
+
+    store.store_dataframe(df)
+    upper_val = store.get("Question", "Q1")
+    logger.info(upper_val)
+    assert len(upper_val) == 1
+
+    lower_val = store.get("Question", "q1")
+    logger.info(lower_val)
+    assert len(lower_val) == 0
+
+    
+def test_store_keeps_latest_version_after_restart(sample_dataframe):
+    _, db_fname = tempfile.mkstemp()
+    db_link = f"sqlite:///{db_fname}"
+    tbl_name = "sample_kbase"
+
+    # Create store and save dataframe
+    store = Store(db_cfg={
+        "db_link": db_link,
+        "model_name": tbl_name,
+    })
+
+    store.store_dataframe(sample_dataframe)
+    
+    df = sample_dataframe.apply(lambda x: x.str.upper() if x.dtype == "object" else x)
+    store.store_dataframe(df)
+    
+    store_2 = Store(db_cfg={
+        "db_link": db_link,
+        "model_name": tbl_name,
+    })
+
+    upper_val = store_2.get("Question", "Q1")
+    logger.info(upper_val)
+    assert len(upper_val) == 1
+
+    lower_val = store_2.get("Question", "q1")
+    logger.info(lower_val)
+    assert len(lower_val) == 0
+
+def test_store_rolls_back_on_vectorization_error(sample_dataframe):
+    _, db_fname = tempfile.mkstemp()
+    db_link = f"sqlite:///{db_fname}"
+    tbl_name = "sample_kbase"
+
+    # Create store and save dataframe
+    store = Store(db_cfg={
+        "db_link": db_link,
+        "model_name": tbl_name,
+    })
+
+    assert store.is_empty
+
+    # break vectorizer on purpose in a white-box manner
+    store.vectorStore = 10 # ugly but this will cause exception on every attr call.
+
+    with pytest.raises(Exception):
+        store.store_dataframe(sample_dataframe)
+        
+    assert store.is_empty
+
+    engine = create_engine(db_link)
+    metadata = MetaData()
+    metadata.reflect(engine)
+
+    df = pd.read_sql_table(tbl_name, engine)
+    assert df.empty
