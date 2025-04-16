@@ -55,7 +55,7 @@ class Store:
 
     def store_dataframe(
         self,
-        df,
+        df: pd.DataFrame,
         doc_transform: Callable[[dict], Document] = default_doc_transform,
     ):
         if not self.engine or not self.vectorStore:
@@ -65,6 +65,7 @@ class Store:
             return
 
         try:
+            df = df.copy()
             # Шаг 1: Сохраняем DataFrame в БД
             new_version, new_ids = self.engine.store_dataframe(df)
             logger.debug("DataFrame saved to DB")
@@ -114,6 +115,7 @@ class Store:
             return []
         return (
             self.df[self.df[column_name] == value]
+            .drop(columns=['_id'], axis=1)
             .apply(lambda x: x.to_dict(), axis=1)
             .tolist()
         )

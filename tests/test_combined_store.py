@@ -115,11 +115,13 @@ def test_save_dataframe_to_tempfile_db(sample_dataframe):
     df = pd.read_sql_table(tbl_name, engine)
     df.drop(labels=["id", "version"], axis=1, inplace=True)
 
-    logger.info(df)
+    logger.info("df={df}", df=df)
     df.columns = df.columns.str.lower()
+
     sample_dataframe.columns = sample_dataframe.columns.str.lower()
+    
     assert set(["question", "description", "solution"]).issubset(df.columns)
-    pd.testing.assert_frame_equal(df, sample_dataframe)
+    pd.testing.assert_frame_equal(df, sample_dataframe, check_like=True)
 
 
 def test_store_loads_df_from_db(sample_dataframe):
@@ -148,7 +150,10 @@ def test_store_loads_df_from_db(sample_dataframe):
     assert val == sample_dataframe[sample_dataframe["Question"] == "q1"].to_dict(
         orient="records"
     )
-    pd.testing.assert_frame_equal(sample_dataframe, load_store.df)
+    
+    # we need to drop _id from store.df
+    df = load_store.df.drop(columns=["_id"], axis=1)
+    pd.testing.assert_frame_equal(sample_dataframe, df, check_like=True)
 
 
 def test_store_keeps_only_latest_version(sample_dataframe):
@@ -239,9 +244,6 @@ def test_store_rolls_back_on_vectorization_error(sample_dataframe):
     assert store.is_empty
 
     engine = create_engine(db_link)
-    metadata = MetaData()
-    metadata.reflect(engine)
-
     df = pd.read_sql_table(tbl_name, engine)
     assert df.empty
 
