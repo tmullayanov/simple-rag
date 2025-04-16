@@ -9,7 +9,6 @@ from sqlalchemy import MetaData, create_engine
 from simple_rag.knowledge_base.store.default_store import Store
 
 
-
 @pytest.fixture(scope="session")
 def store():
     return Store()
@@ -76,16 +75,19 @@ def test_store_can_use_chroma_store():
     # not the best way to test this but I think it will suffice
     assert isinstance(store.vectorStore, Chroma)
 
+
 @pytest.fixture
 def sample_dataframe():
     """
     Фикстура для создания тестового DataFrame.
     """
-    return pd.DataFrame({
-            "Question": ["q1", "q2", "q3"], 
-            "Description": ["d1", "d2", "d3"], 
-            "Solution": ["s1", "s2", "s3"]
-        })
+    return pd.DataFrame(
+        {
+            "Question": ["q1", "q2", "q3"],
+            "Description": ["d1", "d2", "d3"],
+            "Solution": ["s1", "s2", "s3"],
+        }
+    )
 
 
 def test_save_dataframe_to_tempfile_db(sample_dataframe):
@@ -111,10 +113,12 @@ def test_save_dataframe_to_tempfile_db(sample_dataframe):
     metadata.reflect(engine)
 
     df = pd.read_sql_table(tbl_name, engine)
-    df.drop(labels=['id', 'version'], axis=1, inplace=True)
+    df.drop(labels=["id", "version"], axis=1, inplace=True)
+
+    logger.info(df)
     df.columns = df.columns.str.lower()
     sample_dataframe.columns = sample_dataframe.columns.str.lower()
-    assert(set(['question', 'description', 'solution']).issubset(df.columns))
+    assert set(["question", "description", "solution"]).issubset(df.columns)
     pd.testing.assert_frame_equal(df, sample_dataframe)
 
 
@@ -139,7 +143,9 @@ def test_store_loads_df_from_db(sample_dataframe):
             "model_name": tbl_name,
         }
     )
-    val = load_store.get('Question', 'q1')
+    val = load_store.get("Question", "q1")
 
-    assert val == sample_dataframe[sample_dataframe['Question'] == 'q1'].to_dict(orient='records')
+    assert val == sample_dataframe[sample_dataframe["Question"] == "q1"].to_dict(
+        orient="records"
+    )
     pd.testing.assert_frame_equal(sample_dataframe, load_store.df)

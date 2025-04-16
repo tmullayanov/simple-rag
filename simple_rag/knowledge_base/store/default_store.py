@@ -8,7 +8,7 @@ import pandas as pd
 
 
 from simple_rag.embeddings import embeddings
-from .db_engine import DBEngine
+from .db_engine import DBEngine, PseudoDBEngine, RollbackDBError, StoreDFError
 
 
 def default_doc_transform(row: dict) -> Document:
@@ -43,6 +43,10 @@ class Store:
 
     @staticmethod
     def build_db_manager(cfg: dict = {}):
+        if not cfg or 'db_link' not in cfg or 'model_name' not in cfg:
+            logger.debug('Create InMemDBEngine()')
+            return PseudoDBEngine()
+        logger.debug('Create default DBEngine()')
         return DBEngine(cfg)
 
     @property
@@ -52,37 +56,44 @@ class Store:
     def store_dataframe(
         self,
         df,
-        doc_transform: Callable[[pd.Series], list[Document]] = default_doc_transform,
+        doc_transform: Callable[[pd.Series], Document] = default_doc_transform,
     ):
         self.df = df
 
+        if not self.engine or not self.vectorStore:
+            logger.warning(
+                "DB engine or VectorStore not configured, skip store_dataframe"
+            )
+            return
+
         try:
-            # Step 1: Saving DataFrame to relational DB - potentially with exception
-            self.engine.store_dataframe(df)
+            # Шаг 1: Сохраняем DataFrame в БД
+            new_version = self.engine.store_dataframe(df)
             logger.debug("DataFrame saved to relational DB")
 
-            # Step 2: Vectorizing data
-            docs = self.df.apply(lambda x: doc_transform(x.to_dict()), axis=1).tolist()
+            # Шаг 2: Векторизация данных
+            docs = df.apply(lambda x: doc_transform(x.to_dict()), axis=1).tolist()
             logger.debug("docs created", docs_len=len(docs))
 
             self.vectorStore.add_documents(docs)
             logger.debug("docs added to vectorStore")
-
-        except DBEngine.StoreDFError as db_error:
-            # FIXME: Replace with DBEngine dedicated exception
-            logger.error(f"Failed to save DataFrame to relational DB: {db_error}")
-            raise db_error
+        
+        except StoreDFError as store_df_error:
+            logger.error(f"Failed to store DataFrame: {store_df_error}")
+            raise store_df_error
 
         except Exception as vectorization_error:
-            # If vectorization fails, attempt to roll back DB changes
+            # Если векторизация завершилась ошибкой, откатываем изменения в БД
             logger.error(
                 f"Vectorization failed: {vectorization_error}. Rolling back DB changes."
             )
             try:
-                self.engine.clear_table()
-                logger.info("Rolled back DB changes due to vectorization failure")
-            except DBEngine.RollbackDBError as rollback_error:
-                logger.error("Failed to roll back DB changes: {rollback_error}")
+                self.engine.rollback_version(new_version)
+            except RollbackDBError as rollback_error:
+                logger.error(f"Failed to roll back DB changes: {rollback_error}")
+                raise rollback_error from vectorization_error
+
+            raise vectorization_error
 
     def get(self, column_name, value) -> list[dict]:
         if self.df is None:
