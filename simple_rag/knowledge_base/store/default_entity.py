@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -11,3 +11,4 @@ class SampleKBase(Base):
     description = Column(String)
     solution = Column(String)
     version = Column(Integer, default=0)
+    vectorized = Column(Boolean, default=False)

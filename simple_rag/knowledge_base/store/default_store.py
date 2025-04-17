@@ -52,6 +52,51 @@ class Store:
     @property
     def is_empty(self):
         return self.df is None
+    
+    def check_and_vectorize_unprocessed(self):
+        """
+        Проверяет, есть ли невекторизованные записи в БД, и выполняет их векторизацию.
+        """
+        if not self.engine or not self.vectorStore:
+            logger.warning("DB engine or VectorStore not configured, skip check_and_vectorize_unprocessed")
+            return
+        
+        try:
+            gen = self.engine.process_unvectorized_rows()
+            entity = next(gen)
+
+            while True:
+                df_row = {
+                    'Question': entity.question,
+                    'Description': entity.description,
+                    'Solution': entity.solution
+                }
+                
+                logger.debug(f'transforming row to doc')
+                doc = default_doc_transform(df_row)
+                logger.debug(f'transformed row to {doc=}')
+
+                if not hasattr(doc, "metadata"):
+                    doc.metadata = {}
+                doc.metadata["_version"] = entity.version
+                doc.metadata["_db_id"] = entity.id
+
+                try:
+                    ids = self.vectorStore.add_documents([doc])
+                    success = True
+                    logger.debug(f'Vectorized. {ids=}')
+                except Exception as e:
+                    logger.error("Failed to add doc to vectorstore!")
+                    success = False
+                finally:
+                    entity = gen.send(success)
+
+        except StopIteration:
+            logger.info("All unvectorized rows have been processed")
+        except Exception as e:
+            logger.error(f"Failed to vectorize: {e}")
+            raise
+
 
     def store_dataframe(
         self,
@@ -73,7 +118,7 @@ class Store:
 
             # Шаг 2: Векторизация данных
             docs = []
-            for i, (_, row) in enumerate(df.iterrows()):
+            for (_, row) in df.iterrows():
                 # Преобразуем строку в документ
                 doc = doc_transform(row.to_dict())
                 
@@ -81,7 +126,7 @@ class Store:
                 if not hasattr(doc, "metadata"):
                     doc.metadata = {}
                 doc.metadata["_version"] = new_version
-                doc.metadata["_db_id"] = new_ids[i]  # Используем ID из БД
+                doc.metadata["_db_id"] = row['_id']  # Используем ID из БД
 
                 docs.append(doc)
 
@@ -131,10 +176,7 @@ class Store:
         )
         logger.debug("docs retrieved {docs_len}", docs_len=len(docs))
         
-        doc_ids = (doc.metadata["_db_id"] for (doc, _) in docs)
+        doc_ids = list(set(doc.metadata["_db_id"] for (doc, _) in docs))
         records = self.df[self.df['_id'].isin(doc_ids)].to_dict(orient='records')
 
         return records
-
-
-

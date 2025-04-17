@@ -32,6 +32,10 @@ class PseudoDBEngine():
     
     def rollback_version(self, version: int):
         self.version -= 1
+
+    def process_unvectorized_rows(self):
+        logger.warning("PseudoDBEngine: process_unvectorized_rows() not implemented")
+        return
         
 
 class DBEngine:
@@ -163,3 +167,36 @@ class DBEngine:
             logger.error(f"Failed to roll back DB changes for version {version}: {e}")
             logger.exception(e)
             raise RollbackDBError("Failed to roll back DB changes") from e
+
+    def process_unvectorized_rows(self):
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        try:
+            unprocessed_rows = (
+                session.query(SampleKBase)
+                .filter(SampleKBase.vectorized == False)
+                .all()
+            )
+
+            for row in unprocessed_rows:
+                logger.debug(f'processing {row=}')
+                success = yield row
+                logger.debug(f'row processed. status={success}')
+
+                if success:
+                    row.vectorized = True
+                else:
+                    # NOTE: maybe we need to raise and abort the rest processing.
+                    logger.warning(f"Vectorization failed for row with id={row.id}")
+
+            logger.debug('Loop finished, going to commit...')
+            session.commit()
+            logger.info("Processed all unvectorized rows")
+
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Failed to process unvectorized rows: {e}")
+            raise
+
+

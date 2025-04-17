@@ -1,3 +1,4 @@
+from xml.etree.ElementInclude import include
 import pytest
 
 from langchain_chroma import Chroma
@@ -6,6 +7,7 @@ import tempfile
 from loguru import logger
 from sqlalchemy import MetaData, create_engine
 
+from simple_rag.knowledge_base.store.db_engine import DBEngine
 from simple_rag.knowledge_base.store.default_store import Store
 
 
@@ -109,11 +111,8 @@ def test_save_dataframe_to_tempfile_db(sample_dataframe):
 
     # Connect to DB and check that the data is written correctly
     engine = create_engine(db_link)
-    metadata = MetaData()
-    metadata.reflect(engine)
-
     df = pd.read_sql_table(tbl_name, engine)
-    df.drop(labels=["id", "version"], axis=1, inplace=True)
+    df.drop(labels=["id", "version", "vectorized"], axis=1, inplace=True)
 
     logger.info("df={df}", df=df)
     df.columns = df.columns.str.lower()
@@ -169,18 +168,20 @@ def test_store_keeps_only_latest_version(sample_dataframe):
         }
     )
 
+    # we get what we saved
     store.store_dataframe(sample_dataframe)
     lower_val = store.get("Question", "q1")
     logger.info(lower_val)
     assert len(lower_val) == 1
 
+    # change df contents and save
     df = sample_dataframe.apply(lambda x: x.str.upper() if x.dtype == "object" else x)
-
     store.store_dataframe(df)
     upper_val = store.get("Question", "Q1")
     logger.info(upper_val)
     assert len(upper_val) == 1
 
+    # check that we overwrote previous version
     lower_val = store.get("Question", "q1")
     logger.info(lower_val)
     assert len(lower_val) == 0
@@ -204,6 +205,7 @@ def test_store_keeps_latest_version_after_restart(sample_dataframe):
     df = sample_dataframe.apply(lambda x: x.str.upper() if x.dtype == "object" else x)
     store.store_dataframe(df)
 
+    # emulate restart with new instance
     store_2 = Store(
         db_cfg={
             "db_link": db_link,
@@ -282,6 +284,46 @@ def test_similar_search_returns_original_kbase_row(df):
         'connect to my VM' in entry['Question'] for entry in matches
     ))
 
+def test_unvectored_rows_are_processed_at_startup(df):
+    _, db_fname = tempfile.mkstemp()
+    db_link = f"sqlite:///{db_fname}"
+    tbl_name = "sample_kbase"
+
+    engine = DBEngine({
+        'db_link': db_link,
+        'model_name': tbl_name
+    })
+    assert engine.is_configured
+
+    version, ids = engine.store_dataframe(df)
+    assert version == 1, "Incorrect version after saving DataFrame"
+    assert len(ids) == len(df), "Length of IDs doesn't match DataFrame size"
+
+    store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        },
+        vectorstore_cfg={
+            "type": "chroma",
+            "collection_name": "support_knowledge_base",
+            "persist_directory": tempfile.mkdtemp(),
+        },
+    )
+
+    store.check_and_vectorize_unprocessed()
+
+    # the following works because ChromaStore provides a convenient method to get all docs and ids
+
+    ids = store.vectorStore.get(include=[])['ids']
+    assert len(df) == len(ids), "Length of IDs doesn't match DataFrame size"
+
+    matches = store.get_entries_similar_to_problem(
+        problem="what is the proper way to connect to VM?"
+    )
+    logger.info("matches {matches}", matches=matches)
+
+    assert len(matches) > 0
 
 @pytest.mark.skip(reason="postponed")
 def test_db_keeps_only_latest_version(sample_dataframe):
@@ -305,3 +347,4 @@ def test_db_keeps_only_latest_version(sample_dataframe):
     engine = create_engine(db_link)
 
     # check that version is unique in db.
+
