@@ -41,7 +41,7 @@ class PseudoDBEngine():
 class DBEngine:
     db_link: str = None
     model_name: str = None
-    engine: Engine = None
+    engine: Engine | None = None
     version: int = 0
 
     def __init__(self, db_cfg: dict = {}):
@@ -200,3 +200,26 @@ class DBEngine:
             raise
 
 
+    def clear_old_versions(self):
+        if not self.engine:
+            logger.warning("DB engine not configured, skip clear_old_versions")
+            return
+
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        try:
+            # Находим максимальную версию
+            max_version = (
+                session.query(func.max(SampleKBase.version)).scalar() or 0
+            )
+
+            session.query(SampleKBase).filter(SampleKBase.version < max_version).delete()
+
+            session.commit()
+            logger.info(f"Cleared old versions from DB (less than {max_version}) versions)")
+
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Failed to clear old versions from DB: {e}")
+            raise

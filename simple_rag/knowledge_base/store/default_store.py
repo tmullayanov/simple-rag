@@ -154,6 +154,24 @@ class Store:
                 raise rollback_error from vectorization_error
 
             raise vectorization_error
+        
+    def clear_old_versions(self):
+        self.engine.clear_old_versions()
+        self._clear_old_vectors(self.engine.version)
+
+    def _clear_old_vectors(self, current_version):
+        if not self.vectorStore:
+            logger.warning("VectorStore not configured, skip clear_old_vectors")
+            return
+
+        try:
+            # Удаляем документы с версией меньше пороговой
+            self.vectorStore.delete(where={"_version": {"$lt": current_version}})
+            logger.info(f"Cleared old vectors from VectorStore (less than {current_version}) versions)")
+
+        except Exception as e:
+            logger.error(f"Failed to clear old vectors from VectorStore: {e}")
+            raise
 
     def get(self, column_name, value) -> list[dict]:
         if self.df is None:

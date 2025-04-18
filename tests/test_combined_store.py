@@ -6,8 +6,10 @@ import pandas as pd
 import tempfile
 from loguru import logger
 from sqlalchemy import MetaData, create_engine
+from sqlalchemy.orm import sessionmaker
 
 from simple_rag.knowledge_base.store.db_engine import DBEngine
+from simple_rag.knowledge_base.store.default_entity import SampleKBase
 from simple_rag.knowledge_base.store.default_store import Store
 
 
@@ -325,7 +327,6 @@ def test_unvectored_rows_are_processed_at_startup(df):
 
     assert len(matches) > 0
 
-@pytest.mark.skip(reason="postponed")
 def test_db_keeps_only_latest_version(sample_dataframe):
     _, db_fname = tempfile.mkstemp()
     db_link = f"sqlite:///{db_fname}"
@@ -336,6 +337,11 @@ def test_db_keeps_only_latest_version(sample_dataframe):
         db_cfg={
             "db_link": db_link,
             "model_name": tbl_name,
+        },
+        vectorstore_cfg={
+            "type": "chroma",
+            "collection_name": "support_knowledge_base",
+            "persist_directory": tempfile.mkdtemp(),
         }
     )
 
@@ -346,5 +352,18 @@ def test_db_keeps_only_latest_version(sample_dataframe):
 
     engine = create_engine(db_link)
 
-    # check that version is unique in db.
+    # explicit step for now
+    store.clear_old_versions()
 
+    # check that version is unique in db.
+    Session = sessionmaker(bind=engine)
+    with Session() as session:
+        versions = session.query(SampleKBase.version).distinct().all()
+        assert len(versions) == 1
+
+    # check that vector store also has only 1 version
+    # once again, this trick works only for ChromaStore
+    # and it's tightly coupled to metadata structure
+    metadatas = store.vectorStore.get()['metadatas']
+    versions = set(m['_version'] for m in metadatas)
+    assert len(versions) == 1
