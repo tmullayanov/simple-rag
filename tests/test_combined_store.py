@@ -77,7 +77,7 @@ def test_store_can_use_chroma_store():
     )
 
     # not the best way to test this but I think it will suffice
-    assert isinstance(store.vectorStore, Chroma)
+    assert isinstance(store.vectorizer.vector_store, Chroma)
 
 
 @pytest.fixture
@@ -240,7 +240,7 @@ def test_store_rolls_back_on_vectorization_error(sample_dataframe):
     assert store.is_empty
 
     # break vectorizer on purpose in a white-box manner
-    store.vectorStore = 10  # ugly but this will cause exception on every attr call.
+    store.vectorizer = 10  # ugly but this will cause exception on every attr call.
 
     with pytest.raises(Exception):
         store.store_dataframe(sample_dataframe)
@@ -316,8 +316,7 @@ def test_unvectored_rows_are_processed_at_startup(df):
     store.check_and_vectorize_unprocessed()
 
     # the following works because ChromaStore provides a convenient method to get all docs and ids
-
-    ids = store.vectorStore.get(include=[])['ids']
+    ids = store.vectorizer.vector_store.get(include=[])['ids']
     assert len(df) == len(ids), "Length of IDs doesn't match DataFrame size"
 
     matches = store.get_entries_similar_to_problem(
@@ -364,6 +363,6 @@ def test_db_keeps_only_latest_version(sample_dataframe):
     # check that vector store also has only 1 version
     # once again, this trick works only for ChromaStore
     # and it's tightly coupled to metadata structure
-    metadatas = store.vectorStore.get()['metadatas']
+    metadatas = store.vectorizer.vector_store.get()['metadatas']
     versions = set(m['_version'] for m in metadatas)
     assert len(versions) == 1
