@@ -51,6 +51,7 @@ VectorStoreConfig = Union[ChromaVectorStoreConfig]
 class StoreConfig(BaseSettings):
     db_cfg: DbConfig = Field(default_factory=DbConfig)
     vectorstore_cfg: VectorStoreConfig = Field(default_factory=VectorStoreConfig, discriminator='type')
+    csv_fallback_path: str = Field(validation_alias='STORE_CSV_FALLBACK', default=None)
 
 
 class AppSettings(HttpSettings, GroqSettings, QnaFileSettings, LoggerSettings, StoreConfig):

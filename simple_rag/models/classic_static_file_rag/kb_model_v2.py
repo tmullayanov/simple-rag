@@ -9,13 +9,11 @@ from simple_rag.knowledge_base.store.default_store import Store
 def init_support_kb_model(
     llm: BaseChatModel, embeddings: Embeddings, app_cfg: dict, *args, **kwargs
 ):
-    db_link = "sqlite:///support.kb.db"
-    model_name = "sample_kbase"
     store = Store(db_cfg=app_cfg["db_cfg"], vectorstore_cfg=app_cfg["vectorstore_cfg"])
 
     if store.is_empty:
         logger.warning("Store is empty, populating it with data...")
-        df = pd.read_csv("assets/support_kbase.csv")
+        df = pd.read_csv(app_cfg["csv_fallback_path"])
         store.store_dataframe(df)
         logger.info("Store populated successfully.")
 
