@@ -32,6 +32,6 @@ class ClassicRagKnowledgeBase(KnowledgeBaseModel):
 
         return response.content
 
-    def query(self, query) -> str:
+    def query(self, query) -> list[str]:
         docs = self._retrieve(query)
-        return list(self._generate(docs, query))
+        return [self._generate(docs, query)]

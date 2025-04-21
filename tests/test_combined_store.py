@@ -313,7 +313,7 @@ def test_unvectored_rows_are_processed_at_startup(df):
         },
     )
 
-    store.check_and_vectorize_unprocessed()
+    # store.check_and_vectorize_unprocessed() - this should be called automatically
 
     # the following works because ChromaStore provides a convenient method to get all docs and ids
     ids = store.vectorizer.vector_store.get(include=[])['ids']
@@ -330,6 +330,7 @@ def test_db_keeps_only_latest_version(sample_dataframe):
     _, db_fname = tempfile.mkstemp()
     db_link = f"sqlite:///{db_fname}"
     tbl_name = "sample_kbase"
+    vector_store_persistence_dir = tempfile.mkdtemp()
 
     # Create store and save dataframe
     store = Store(
@@ -340,7 +341,7 @@ def test_db_keeps_only_latest_version(sample_dataframe):
         vectorstore_cfg={
             "type": "chroma",
             "collection_name": "support_knowledge_base",
-            "persist_directory": tempfile.mkdtemp(),
+            "persist_directory": vector_store_persistence_dir,
         }
     )
 
@@ -351,8 +352,18 @@ def test_db_keeps_only_latest_version(sample_dataframe):
 
     engine = create_engine(db_link)
 
-    # explicit step for now
-    store.clear_old_versions()
+    # emulate restart and make sure we keep only the latest version
+    store = Store(
+        db_cfg={
+            "db_link": db_link,
+            "model_name": tbl_name,
+        },
+        vectorstore_cfg={
+            "type": "chroma",
+            "collection_name": "support_knowledge_base",
+            "persist_directory": vector_store_persistence_dir,
+        }
+    )
 
     # check that version is unique in db.
     Session = sessionmaker(bind=engine)

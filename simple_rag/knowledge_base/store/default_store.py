@@ -23,6 +23,10 @@ class Store:
 
         self.df = self.engine.load_dataframe()
 
+        # sync and cleanup
+        self.check_and_vectorize_unprocessed()
+        self.clear_old_versions()
+
     @staticmethod
     def build_vector_store(cfg: dict):
         if cfg.get("type", None) == "chroma":
@@ -152,15 +156,17 @@ class Store:
     def similarity_search(self, query, config: dict = {}) -> list[Document]:
         return self.vectorizer.similarity_search(query, **config)
     
-    def get_entries_similar_to_problem(self, problem: str, search_config: dict = {}, *arg, **kwargs) -> list[dict]:
+    def get_entries_similar_to_problem(self, problem: str, search_config: dict = {}, *args, **kwargs) -> list[dict]:
         docs = self.vectorizer.similarity_search_with_relevance_scores(
             problem,
             **search_config,
             filter={"_version": self.engine.version},
         )
-        logger.debug("docs retrieved {docs_len}", docs_len=len(docs))
+        logger.debug("GET_ENTRIES docs retrieved {docs_len}", docs_len=len(docs))
+        logger.debug("GET_ENTRIES {docs}", docs=docs)
         
         doc_ids = {doc.metadata["_db_id"] for (doc, _) in docs}
+        logger.debug("GET_ENTRIES unique doc_ids retrieved {doc_ids_len}", doc_ids_len=len(doc_ids))
         records = self.df[self.df['_id'].isin(doc_ids)].to_dict(orient='records')
 
         return records

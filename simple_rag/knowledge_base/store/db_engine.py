@@ -35,6 +35,12 @@ class PseudoDBEngine():
 
     def process_unvectorized_rows(self):
         logger.warning("PseudoDBEngine: process_unvectorized_rows() not implemented")
+        # actually this is how you make empty generator
+        return
+        yield
+    
+    def clear_old_versions(self):
+        logger.warning("PseudoDBEngine: clear_old_versions() not implemented")
         return
         
 
@@ -49,6 +55,7 @@ class DBEngine:
         self.model_name = db_cfg["model_name"]
 
         if self.db_link:
+            logger.debug(f"DBEngine: db_link={self.db_link}")
             self.engine = create_engine(self.db_link)
 
     @property
@@ -61,10 +68,10 @@ class DBEngine:
             logger.info("LOAD_DF skip", no_db=no_db)
             return None
 
-        with self.engine.connect() as connection:
-            has_table = self.engine.dialect.has_table(connection, self.model_name)
-            if not has_table:
-                return None
+        has_table = self._check_if_table_exists(self.model_name)
+        if not has_table:
+            logger.info("LOAD_DF: No table in DB")
+            return None
 
         Session = sessionmaker(bind=self.engine)
         session = Session()
@@ -74,7 +81,7 @@ class DBEngine:
         except OperationalError:
             max_version = 0
         
-        logger.debug(f"max_version: {max_version}")
+        logger.debug(f"LOAD_DF max_version: {max_version}")
         self.version = max_version
 
         data = (
@@ -85,6 +92,7 @@ class DBEngine:
             [(row.id, row.question, row.description, row.solution) for row in data],
             columns=["_id", "Question", "Description", "Solution"],
         )
+        logger.info(f"LOAD_DF, {df.empty=}")
 
         return df
 
@@ -169,6 +177,11 @@ class DBEngine:
             raise RollbackDBError("Failed to roll back DB changes") from e
 
     def process_unvectorized_rows(self):
+        has_table = self._check_if_table_exists(self.model_name)
+        if not has_table:
+            logger.info("PROCE_UNVEC: No table in DB, return")
+            return
+            
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
@@ -204,6 +217,12 @@ class DBEngine:
         if not self.engine:
             logger.warning("DB engine not configured, skip clear_old_versions")
             return
+        
+        
+        has_table = self._check_if_table_exists(self.model_name)
+        if not has_table:
+            logger.info("CLEAR_OLD_VERS: No table in DB, return")
+            return None
 
         Session = sessionmaker(bind=self.engine)
         session = Session()
@@ -223,3 +242,9 @@ class DBEngine:
             session.rollback()
             logger.error(f"Failed to clear old versions from DB: {e}")
             raise
+
+    def _check_if_table_exists(self, table_name):
+        with self.engine.connect() as connection:
+            has_table = self.engine.dialect.has_table(connection, table_name)
+            logger.debug(f'_check if table exists: {has_table=}')
+            return has_table
