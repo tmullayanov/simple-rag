@@ -1,14 +1,19 @@
+from typing import Optional
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
 from loguru import logger
 import pandas as pd
+from pydantic import BaseModel
 
 
 from simple_rag.embeddings import embeddings
 from simple_rag.knowledge_base.store.vectorizer import Vectorizer
 from .db_engine import DBEngine, PseudoDBEngine, RollbackDBError, StoreDFError
 
+class DbConfig(BaseModel):
+    db_link: Optional[str] = None
+    model_name: Optional[str] = None
 
 
 class Store:
@@ -24,8 +29,8 @@ class Store:
         self.df = self.engine.load_dataframe()
 
         # sync and cleanup
-        self.check_and_vectorize_unprocessed()
         self.clear_old_versions()
+        self.check_and_vectorize_unprocessed()
 
     @staticmethod
     def build_vector_store(cfg: dict):
@@ -103,12 +108,12 @@ class Store:
 
         try:
             df = df.copy()
-            # Шаг 1: Сохраняем DataFrame в БД
+            # Step 1: Store DataFrame in the database
             new_version, new_ids = self.engine.store_dataframe(df)
             logger.info("DataFrame saved to DB")
             df['_id'] = new_ids
 
-            # Шаг 2: Векторизация данных
+            # Step 2: Vectorize the data
             docs = []
             for (_, row) in df.iterrows():
                 doc = self.vectorizer.transform_row_to_document(row.to_dict(), version=new_version, db_id=row['_id'])
@@ -119,7 +124,10 @@ class Store:
             self.vectorizer.vectorize_documents(docs)
             logger.info("docs added to vectorStore")
 
-            # Шаг 3: Обновляем DataFrame в памяти
+            # Step 2.5: Update vectorized attr in DB
+            self.engine._update_vectorized_flag(new_version)
+
+            # Step 3: Update the DataFrame in memory
             self.df = df
         
         except StoreDFError as store_df_error:

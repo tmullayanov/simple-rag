@@ -42,6 +42,10 @@ class PseudoDBEngine():
     def clear_old_versions(self):
         logger.warning("PseudoDBEngine: clear_old_versions() not implemented")
         return
+    
+    def _update_vectorized_flag(self, *args, **kwargs):
+        logger.warning("PseudoDBEngine: update_vectorized_flag() not implemented")
+        return
         
 
 class DBEngine:
@@ -248,3 +252,36 @@ class DBEngine:
             has_table = self.engine.dialect.has_table(connection, table_name)
             logger.debug(f'_check if table exists: {has_table=}')
             return has_table
+        
+    def _update_vectorized_flag(self, version: int, new_status: bool = True):
+        if not self.engine:
+            logger.warning("DB engine not configured, skip clear_old_versions")
+            return
+        
+        
+        has_table = self._check_if_table_exists(self.model_name)
+        if not has_table:
+            logger.info("CLEAR_OLD_VERS: No table in DB, return")
+            return None
+
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        try:
+            unprocessed_rows = (
+                session.query(SampleKBase)
+                .filter(SampleKBase.version == version)
+                .all()
+            )
+
+            for row in unprocessed_rows:
+                logger.debug(f'processing {row=}')
+                row.vectorized = new_status
+                
+            session.commit()
+            logger.info(f"Updated vectorized flag for version {version}")
+
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Failed to update vectorized flag for version {version}: {e}")
+

@@ -7,6 +7,7 @@ from loguru import logger
 from simple_rag.models.classic_static_file_rag import (
     build_classic_rag_knowledgebase_model,
 )
+from simple_rag.models.classic_static_file_rag.kb_model_v2 import init_support_kb_model
 
 from .base import KnowledgeBaseModel
 
@@ -22,7 +23,10 @@ class KnowledgeBaseManager:
 
     builders: dict[
         str, Callable[[BaseChatModel, Embeddings, dict], KnowledgeBaseModel]
-    ] = {"classic": build_classic_rag_knowledgebase_model}
+    ] = {
+        "classic": build_classic_rag_knowledgebase_model,
+        "classic_v2": init_support_kb_model
+    }
 
     def __init__(self, llm: BaseChatModel, embeddings: Embeddings, app_config: dict):
         self._llm = llm

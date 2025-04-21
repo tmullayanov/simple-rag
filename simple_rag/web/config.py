@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional, Union
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
@@ -30,7 +30,30 @@ class LoggerSettings(BaseSettings):
     )
 
 
-class AppSettings(HttpSettings, GroqSettings, QnaFileSettings, LoggerSettings):
+class DbConfig(BaseSettings):
+    db_link: Optional[str] = None
+    model_name: Optional[str] = None
+
+    class Config:
+        env_prefix = "DB_"  # Префикс для переменных окружения
+
+
+class ChromaVectorStoreConfig(BaseSettings):
+    type: Literal['chroma'] = 'chroma'
+    collection_name: str
+    persist_directory: str
+
+    class Config:
+        env_prefix = "VECTORSTORE_CHROMA_"
+
+VectorStoreConfig = Union[ChromaVectorStoreConfig]
+
+class StoreConfig(BaseSettings):
+    db_cfg: DbConfig = Field(default_factory=DbConfig)
+    vectorstore_cfg: VectorStoreConfig = Field(default_factory=VectorStoreConfig, discriminator='type')
+
+
+class AppSettings(HttpSettings, GroqSettings, QnaFileSettings, LoggerSettings, StoreConfig):
     pass
 
 
