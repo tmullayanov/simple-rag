@@ -154,6 +154,7 @@ class Store:
     def get(self, column_name, value) -> list[dict]:
         if self.df is None:
             return []
+        
         return (
             self.df[self.df[column_name] == value]
             .drop(columns=['_id'], axis=1)

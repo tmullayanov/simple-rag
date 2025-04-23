@@ -6,6 +6,7 @@ Base = declarative_base()
 
 class SampleKBase(Base):
     __tablename__ = "sample_kbase"
+
     id = Column(Integer, primary_key=True)
     question = Column(String)
     description = Column(String)
