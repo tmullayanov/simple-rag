@@ -32,7 +32,7 @@ def ask_question(
     knowledge_base_manager: KnowledgeBaseManager = Depends(get_knowledge_base_manager),
     # it breaks the layers isolation but for simple case we follow the fastapi docs
     db: Session = Depends(get_db),
-):
+) -> MessageResponse:
     try:
         logger.info(f"Got request to knowledge base model={request.model}")
         model = knowledge_base_manager.get_model(request.model)
@@ -66,7 +66,7 @@ def available_models(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get('/metrics/')
-def metrics(db: Session = Depends(get_db)):
+def metrics(db: Session = Depends(get_db)) -> MetricsReport:
     logger.info(f"Got request to knowledge base metrics")
     metrics, totals = get_metrics(db)
 
