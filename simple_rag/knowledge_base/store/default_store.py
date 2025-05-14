@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Type
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
@@ -8,8 +8,10 @@ from pydantic import BaseModel
 
 
 from simple_rag.embeddings import embeddings
+from simple_rag.knowledge_base.store.entity.base import BaseEntity
 from simple_rag.knowledge_base.store.vectorizer import Vectorizer
-from .db_engine import DBEngine, PseudoDBEngine, RollbackDBError, StoreDFError
+from .db_engine import DBEngine, DBEngineConf, PseudoDBEngine, RollbackDBError, StoreDFError
+
 
 class DbConfig(BaseModel):
     db_link: Optional[str] = None
@@ -21,8 +23,18 @@ class Store:
     df: pd.DataFrame = None
     engine: DBEngine = None
 
-    def __init__(self, db_cfg: dict = {}, vectorstore_cfg: dict = {}, *args, **kwargs):
-        self.engine = Store.build_db_manager(db_cfg)
+    def __init__(
+        self,
+        db_cfg: dict = {},
+        vectorstore_cfg: dict = {},
+        entity: Type[BaseEntity] | None = None,
+        *args,
+        **kwargs,
+    ):
+        self.engine = Store.build_db_manager({
+            **db_cfg,
+            "entity_class": entity
+        })
         vectorStore = Store.build_vector_store(vectorstore_cfg)
         self.vectorizer = Vectorizer(vectorStore)
 
@@ -45,44 +57,48 @@ class Store:
         return InMemoryVectorStore(embeddings)
 
     @staticmethod
-    def build_db_manager(cfg: dict = {}):
-        if not cfg or 'db_link' not in cfg or 'model_name' not in cfg:
-            logger.debug('Create InMemDBEngine()')
+    def build_db_manager(cfg: DBEngineConf = {}):
+        if not cfg or "db_link" not in cfg or "model_name" not in cfg:
+            logger.debug("Create InMemDBEngine()")
             return PseudoDBEngine()
-        logger.debug('Create default DBEngine()')
+        logger.debug("Create default DBEngine()")
         return DBEngine(cfg)
 
     @property
     def is_empty(self):
         return self.df is None
-    
+
     def check_and_vectorize_unprocessed(self):
         """
         Проверяет, есть ли невекторизованные записи в БД, и выполняет их векторизацию.
         """
         if not self.engine:
-            logger.warning("DB engine not configured, skip check_and_vectorize_unprocessed")
+            logger.warning(
+                "DB engine not configured, skip check_and_vectorize_unprocessed"
+            )
             return
-        
+
         try:
             gen = self.engine.process_unvectorized_rows()
             entity = next(gen)
 
             while True:
                 df_row = {
-                    'Question': entity.question,
-                    'Description': entity.description,
-                    'Solution': entity.solution
+                    "Question": entity.question,
+                    "Description": entity.description,
+                    "Solution": entity.solution,
                 }
-                
-                logger.debug(f'transforming row to doc')
-                doc = self.vectorizer.transform_row_to_document(df_row, entity.version, entity.id)
-                logger.debug(f'transformed row to {doc=}')
+
+                logger.debug(f"transforming row to doc")
+                doc = self.vectorizer.transform_row_to_document(
+                    df_row, entity.version, entity.id
+                )
+                logger.debug(f"transformed row to {doc=}")
 
                 try:
                     ids = self.vectorizer.vectorize_documents([doc])
                     success = True
-                    logger.debug(f'Vectorized. {ids=}')
+                    logger.debug(f"Vectorized. {ids=}")
                 except Exception as e:
                     logger.error("Failed to add doc to vectorstore!")
                     success = False
@@ -95,15 +111,12 @@ class Store:
             logger.error(f"Failed to vectorize: {e}")
             raise
 
-
     def store_dataframe(
         self,
         df: pd.DataFrame,
     ):
         if not self.engine:
-            logger.warning(
-                "DB engine not configured, skip store_dataframe"
-            )
+            logger.warning("DB engine not configured, skip store_dataframe")
             return
 
         try:
@@ -111,12 +124,14 @@ class Store:
             # Step 1: Store DataFrame in the database
             new_version, new_ids = self.engine.store_dataframe(df)
             logger.info("DataFrame saved to DB")
-            df['_id'] = new_ids
+            df["_id"] = new_ids
 
             # Step 2: Vectorize the data
             docs = []
-            for (_, row) in df.iterrows():
-                doc = self.vectorizer.transform_row_to_document(row.to_dict(), version=new_version, db_id=row['_id'])
+            for _, row in df.iterrows():
+                doc = self.vectorizer.transform_row_to_document(
+                    row.to_dict(), version=new_version, db_id=row["_id"]
+                )
                 docs.append(doc)
 
             logger.debug("docs created", docs_len=len(docs))
@@ -129,7 +144,7 @@ class Store:
 
             # Step 3: Update the DataFrame in memory
             self.df = df
-        
+
         except StoreDFError as store_df_error:
             logger.error(f"Failed to store DataFrame: {store_df_error}")
             raise store_df_error
@@ -146,7 +161,7 @@ class Store:
                 raise rollback_error from vectorization_error
 
             raise vectorization_error
-        
+
     def clear_old_versions(self):
         self.engine.clear_old_versions()
         self.vectorizer.delete_old_vectors(self.engine.version)
@@ -154,18 +169,20 @@ class Store:
     def get(self, column_name, value) -> list[dict]:
         if self.df is None:
             return []
-        
+
         return (
             self.df[self.df[column_name] == value]
-            .drop(columns=['_id'], axis=1)
+            .drop(columns=["_id"], axis=1)
             .apply(lambda x: x.to_dict(), axis=1)
             .tolist()
         )
 
     def similarity_search(self, query, config: dict = {}) -> list[Document]:
         return self.vectorizer.similarity_search(query, **config)
-    
-    def get_entries_similar_to_problem(self, problem: str, search_config: dict = {}, *args, **kwargs) -> list[dict]:
+
+    def get_entries_similar_to_problem(
+        self, problem: str, search_config: dict = {}, *args, **kwargs
+    ) -> list[dict]:
         docs = self.vectorizer.similarity_search_with_relevance_scores(
             problem,
             **search_config,
@@ -173,9 +190,12 @@ class Store:
         )
         logger.debug("GET_ENTRIES docs retrieved {docs_len}", docs_len=len(docs))
         logger.debug("GET_ENTRIES {docs}", docs=docs)
-        
+
         doc_ids = {doc.metadata["_db_id"] for (doc, _) in docs}
-        logger.debug("GET_ENTRIES unique doc_ids retrieved {doc_ids_len}", doc_ids_len=len(doc_ids))
-        records = self.df[self.df['_id'].isin(doc_ids)].to_dict(orient='records')
+        logger.debug(
+            "GET_ENTRIES unique doc_ids retrieved {doc_ids_len}",
+            doc_ids_len=len(doc_ids),
+        )
+        records = self.df[self.df["_id"].isin(doc_ids)].to_dict(orient="records")
 
         return records

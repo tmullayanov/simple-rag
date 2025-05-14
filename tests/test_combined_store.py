@@ -9,7 +9,7 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 
 from simple_rag.knowledge_base.store.db_engine import DBEngine
-from simple_rag.knowledge_base.store.default_entity import SampleKBase
+from simple_rag.knowledge_base.store.entity.default import SampleKBase
 from simple_rag.knowledge_base.store.default_store import Store
 
 

@@ -25,7 +25,7 @@ class KnowledgeBaseManager:
         str, Callable[[BaseChatModel, Embeddings, dict], KnowledgeBaseModel]
     ] = {
         "classic": build_classic_rag_knowledgebase_model,
-        "classic_v2": init_support_kb_model
+        "classic_v2": init_support_kb_model,
     }
 
     def __init__(self, llm: BaseChatModel, embeddings: Embeddings, app_config: dict):
