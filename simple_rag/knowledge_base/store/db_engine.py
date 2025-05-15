@@ -67,7 +67,7 @@ class DBEngine:
     def __init__(self, db_cfg: DBEngineConf = {}):
         self.db_link = db_cfg["db_link"]
         self.model_name = db_cfg["model_name"]
-        self.entity_class = SampleKBase if "entity_class" not in db_cfg else db_cfg["entity_class"]
+        self.entity_class = db_cfg.get("entity_class", None) or SampleKBase
 
         if self.db_link:
             logger.debug(f"DBEngine: db_link={self.db_link}")
