@@ -72,6 +72,7 @@ class DBEngine:
         if self.db_link:
             logger.debug(f"DBEngine: db_link={self.db_link}")
             self.engine = create_engine(self.db_link)
+            self.Session = sessionmaker(bind=self.engine)
 
     @property
     def is_configured(self) -> bool:
@@ -88,8 +89,7 @@ class DBEngine:
             logger.info("LOAD_DF: No table in DB")
             return None
 
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+        session = self.Session()
 
         try:
             max_version = (
@@ -140,8 +140,8 @@ class DBEngine:
                 Base.metadata.create_all(connection)
                 logger.info(f"Table '{self.model_name}' created in relational DB")
 
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+
+        session = self.Session()
         try:
             # Find the latest version and increment it
             max_version = (
@@ -180,8 +180,7 @@ class DBEngine:
             logger.warning("DB engine not configured, skip rollback_version")
             raise RollbackDBError("DB engine not configured")
 
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+        session = self.Session()
 
         try:
             with session.begin():
@@ -199,9 +198,8 @@ class DBEngine:
         if not has_table:
             logger.info("PROCE_UNVEC: No table in DB, return")
             return
-
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+            
+        session = self.Session()
 
         try:
             unprocessed_rows = (
@@ -240,8 +238,7 @@ class DBEngine:
             logger.info("CLEAR_OLD_VERS: No table in DB, return")
             return None
 
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+        session = self.Session()
 
         try:
             # Находим максимальную версию
@@ -279,8 +276,7 @@ class DBEngine:
             logger.info("CLEAR_OLD_VERS: No table in DB, return")
             return None
 
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+        session = self.Session()
 
         try:
             unprocessed_rows = (
