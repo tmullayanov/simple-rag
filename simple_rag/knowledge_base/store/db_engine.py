@@ -107,10 +107,7 @@ class DBEngine:
             .all()
         )
 
-        df = pd.DataFrame(
-            [(row.id, row.question, row.description, row.solution) for row in data],
-            columns=["_id", "Question", "Description", "Solution"],
-        )
+        df = self.entity_class.make_df(data)
         logger.info(f"LOAD_DF, {df.empty=}")
 
         return df
@@ -153,7 +150,6 @@ class DBEngine:
             new_ids = []
 
             for _, row in df.iterrows():
-                # NOTE: candidate for static ctor
                 new_row = self.entity_class.from_row(row, new_version)
                 session.add(new_row)
                 session.flush()

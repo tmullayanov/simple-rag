@@ -48,7 +48,7 @@ class SampleKBase(BaseEntity, DataframeMixin):
     def to_vector_document(self):
         return {"id": self.id, "data": self.description}
 """        
-from typing import Protocol
+from typing import Protocol, Self
 import pandas as pd
 from sqlalchemy import Column, Integer, Boolean
 from sqlalchemy.orm import declarative_base
@@ -67,5 +67,14 @@ class BaseEntity(Base):
     @abstractmethod
     def from_row(cls, row: pd.Series, version: int):
         '''Create instance from a DataFrame row'''
+        raise NotImplementedError("Subclasses must implement this method")
+    
+    @classmethod
+    @abstractmethod
+    def make_df(cls, batch: list[Self]) -> pd.DataFrame:
+        raise NotImplementedError("Subclasses must implement this method")
+    
+    @abstractmethod
+    def to_vector_document(self) -> dict:
         raise NotImplementedError("Subclasses must implement this method")
 

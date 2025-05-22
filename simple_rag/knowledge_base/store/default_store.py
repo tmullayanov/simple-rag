@@ -83,11 +83,7 @@ class Store:
             entity = next(gen)
 
             while True:
-                df_row = {
-                    "Question": entity.question,
-                    "Description": entity.description,
-                    "Solution": entity.solution,
-                }
+                df_row = entity.to_vector_document()
 
                 logger.debug(f"transforming row to doc")
                 doc = self.vectorizer.transform_row_to_document(
