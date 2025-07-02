@@ -7,8 +7,8 @@ import pandas as pd
 from pydantic import BaseModel
 
 
-from simple_rag.embeddings import embeddings
 from simple_rag.knowledge_base.store.entity.base import BaseEntity
+from simple_rag.embeddings import embeddings as default_embeddings
 from simple_rag.knowledge_base.store.vectorizer import Vectorizer
 from .db_engine import DBEngine, DBEngineConf, PseudoDBEngine, RollbackDBError, StoreDFError
 
@@ -28,6 +28,7 @@ class Store:
         db_cfg: dict = {},
         vectorstore_cfg: dict = {},
         entity: Type[BaseEntity] | None = None,
+        embeddings=None,
         *args,
         **kwargs,
     ):
@@ -45,7 +46,10 @@ class Store:
         self.check_and_vectorize_unprocessed()
 
     @staticmethod
-    def build_vector_store(cfg: dict):
+    def build_vector_store(cfg: dict, embeddings = None):
+        if embeddings is None:
+            embeddings = default_embeddings
+            
         if cfg.get("type", None) == "chroma":
             return Chroma(
                 collection_name=cfg["collection_name"],

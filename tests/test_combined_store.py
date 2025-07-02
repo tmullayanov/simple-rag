@@ -5,9 +5,10 @@ from langchain_chroma import Chroma
 import pandas as pd
 import tempfile
 from loguru import logger
-from sqlalchemy import MetaData, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from simple_rag import embeddings
 from simple_rag.knowledge_base.store.db_engine import DBEngine
 from simple_rag.knowledge_base.store.entity.default import SampleKBase
 from simple_rag.knowledge_base.store.default_store import Store
@@ -377,3 +378,7 @@ def test_db_keeps_only_latest_version(sample_dataframe):
     metadatas = store.vectorizer.vector_store.get()['metadatas']
     versions = set(m['_version'] for m in metadatas)
     assert len(versions) == 1
+
+def test_embeddings_can_be_passed_explicitly():
+    store = Store(embeddings=embeddings)
+    assert store.is_empty
