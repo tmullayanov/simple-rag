@@ -6,6 +6,8 @@ from simple_rag.chats.chat import Chat, ChatModel
 
 from loguru import logger
 
+from simple_rag.chats.history import clear_history
+
 
 class ChatManager:
     INACTIVITY_TIMEOUT = timedelta(minutes=5)  # FIXME: use config
@@ -58,6 +60,7 @@ class ChatManager:
             for chat_id in inactive_chats:
                 logger.info(f"Removing inactive chat {chat_id}")
                 self.remove_chat(chat_id)
+                clear_history(chat_id)
 
     def stop(self):
         """Method for stopping the background task"""
