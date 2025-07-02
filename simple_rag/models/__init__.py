@@ -6,6 +6,7 @@ from loguru import logger
 from simple_rag.chats.chat import ChatModel
 from simple_rag.models.classic_static_file_rag import build_classic_rag_model
 from simple_rag.models.qna_rag.model import QnAServiceConfig, build_static_file_model
+from simple_rag.models.simple_chat_models.raw_chat import build_raw_chat_model
 from simple_rag.models.stub_model import StubModel
 
 
@@ -26,6 +27,8 @@ class ModelCreator:
         self._models = {
             "rag_question_vector": build_static_file_model,
             "classic_rag": build_classic_rag_model,
+            "echo": lambda *args: ChatModel(),
+            "raw": build_raw_chat_model,
             "stub_model": lambda *args: StubModel(),
         }
 
