@@ -77,7 +77,7 @@ class RawChat(ChatModel):
         logger.info("RawChat.send()")
         res = self.chain.invoke({
             "question": message
-        }, config={"configurable": {"session_id": "foo"}})
+        }, config={"configurable": {"session_id": id}})
         
         return res.content
 
